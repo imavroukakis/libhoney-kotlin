@@ -11,7 +11,7 @@ class EventTest {
         val now = LocalDateTime.now()
         val event = Event(HoneyConfig())
         assertThat(event.timeStamp).isNotNull()
-        assertThat(event.timeStamp).isAfter(now)
+        assertThat(event.timeStamp).isAfterOrEqualTo(now)
     }
 
     @Test

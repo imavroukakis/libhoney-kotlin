@@ -10,7 +10,7 @@ class Event(
         val apiHost: String = "https://api.honeycomb.io",
         val sampleRate: Int = 1,
         val timeStamp: LocalDateTime = LocalDateTime.now(),
-        val data: Map<String, Any> = mapOf()) {
+        private val data: Map<String, Any> = mapOf()) {
 
 
     constructor(honeyConfig: HoneyConfig, timeStamp: LocalDateTime = LocalDateTime.now())
