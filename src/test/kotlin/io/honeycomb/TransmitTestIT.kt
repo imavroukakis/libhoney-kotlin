@@ -1,6 +1,5 @@
 package io.honeycomb
 
-import com.github.kittinunf.fuel.Fuel
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import java.net.HttpURLConnection
@@ -20,7 +19,7 @@ class TransmitTestIT {
                 .add("date", now)
                 .add("array", listOf(1, 2, 3, 4))
                 .add("range", 1..4)
-        val (_, response, _) = Transmit.sendBlocking(event)
+        val (_, response, _) = Transmit.blockingSend(event)
         assertThat(response.statusCode).isEqualTo(HttpURLConnection.HTTP_OK)
     }
 
@@ -36,7 +35,7 @@ class TransmitTestIT {
                 .add("date", now)
                 .add("array", listOf(1, 2, 3, 4))
                 .add("range", 1..4)
-        val (request, response, _) = Transmit.sendBlocking(event)
+        val (request, response, _) = Transmit.blockingSend(event)
         assertThat(response.statusCode).isEqualTo(HttpURLConnection.HTTP_OK)
         //rather dirty check
         assertThat(request.cUrlString().contains("\\\"hello\\\":\\\"world\\\"")).isTrue()
@@ -47,7 +46,7 @@ class TransmitTestIT {
         val now = LocalDateTime.now()
         val honeyConfig = HoneyConfig(dataSet = "kotlintest")
         val event = Event.newEvent(honeyConfig, now).add("string", "bar")
-        val (_, response, _) = Transmit.sendBlocking(event)
+        val (_, response, _) = Transmit.blockingSend(event)
         assertThat(response.statusCode).isEqualTo(HttpURLConnection.HTTP_UNAUTHORIZED)
     }
 }

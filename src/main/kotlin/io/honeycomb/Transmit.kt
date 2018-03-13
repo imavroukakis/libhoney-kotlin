@@ -25,7 +25,7 @@ object Transmit {
      * @param event the [Event] to transmit
      * @return the response [Triple]
      */
-    fun sendBlocking(event: Event): Triple<Request, Response, Result<String, FuelError>> {
+    fun blockingSend(event: Event): Triple<Request, Response, Result<String, FuelError>> {
         val evt = event.add(GlobalConfig.dataPairs)
         return createRequest(evt.apiHost + PATH + evt.dataSet, evt).responseString()
     }
