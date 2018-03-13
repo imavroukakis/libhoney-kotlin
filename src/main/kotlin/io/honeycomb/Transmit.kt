@@ -1,10 +1,12 @@
+package io.honeycomb
+
 import com.github.kittinunf.fuel.core.Request
 import com.github.kittinunf.fuel.httpPost
 
 object Transmit {
 
     private const val HONEYCOMB_TEAM_HEADER = "X-Honeycomb-Team"
-    private const val HONEYCOMB_EVENT_TIME = "X-Honeycomb-Event-Time"
+    private const val HONEYCOMB_EVENT_TIME = "X-Honeycomb-io.honeycomb.Event-Time"
     private const val HONEYCOMB_SAMPLE_RATE = "X-Honeycomb-Samplerate"
     private val contentType = "Content-Type" to "application/json"
     private val userAgent = "User-Agent" to "libhoney-kt/0.0.1"

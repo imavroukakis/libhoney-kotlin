@@ -1,3 +1,5 @@
+package io.honeycomb
+
 import com.beust.klaxon.JsonObject
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME

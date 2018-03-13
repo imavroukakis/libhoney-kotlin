@@ -1,4 +1,8 @@
+package io.honeycomb
+
 import com.github.kittinunf.fuel.Fuel
+import io.honeycomb.Event
+import io.honeycomb.Transmit
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import java.net.HttpURLConnection
