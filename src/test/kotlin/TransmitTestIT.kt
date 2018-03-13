@@ -4,7 +4,7 @@ import org.junit.Test
 import java.net.HttpURLConnection
 import java.time.LocalDateTime
 
-class TransmitTest {
+class TransmitTestIT {
 
 
     @Test
