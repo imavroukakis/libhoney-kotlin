@@ -1,6 +1,5 @@
 package io.honeycomb
 
-import io.honeycomb.HoneyConfig
 import org.hamcrest.core.IsEqual.equalTo
 import org.junit.Assert.assertThat
 import org.junit.Test
