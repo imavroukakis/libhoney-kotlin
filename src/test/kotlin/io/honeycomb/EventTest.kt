@@ -7,11 +7,14 @@ import java.time.format.DateTimeFormatter
 
 class EventTest {
 
+    private val writeKey: String = "WRITE_KEY"
+    private val dataSet: String = "data_set"
+    private val honeyConfig: HoneyConfig = HoneyConfig(writeKey, dataSet)
 
     @Test
     fun checksDefaults() {
         val now = LocalDateTime.now()
-        val event = Event.newEvent(HoneyConfig())
+        val event = Event.newEvent(honeyConfig)
         assertThat(event.timeStamp).isNotNull()
         assertThat(event.timeStamp).isAfterOrEqualTo(now)
         assertThat(event.sampleRate).isEqualTo(1)
@@ -20,7 +23,7 @@ class EventTest {
     @Test
     fun checksTimeAssignment() {
         val now = LocalDateTime.now()
-        val event = Event.newEvent(HoneyConfig(), now)
+        val event = Event.newEvent(honeyConfig, now)
         assertThat(event.timeStamp).isNotNull()
         assertThat(event.timeStamp).isEqualTo(now)
     }
@@ -28,7 +31,7 @@ class EventTest {
     @Test
     fun eventAdd() {
         val now = LocalDateTime.now()
-        val event = Event.newEvent(HoneyConfig(), now).add("string", "bar")
+        val event = Event.newEvent(honeyConfig, now).add("string", "bar")
                 .add("integer", 1)
                 .add("float", 1.1f)
                 .add("bool", true)

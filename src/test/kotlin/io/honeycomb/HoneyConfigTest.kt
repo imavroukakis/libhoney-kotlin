@@ -9,15 +9,11 @@ class HoneyConfigTest {
 
     @Test
     fun checksDefaults() {
-        var honeyConfig = HoneyConfig()
-        assertThat("https://api.honeycomb.io", equalTo(honeyConfig.apiHost))
-
-        honeyConfig = HoneyConfig("KEY","myDataSet")
-        assertThat("https://api.honeycomb.io", equalTo(honeyConfig.apiHost))
-        assertThat("KEY", equalTo(honeyConfig.writeKey))
-        assertThat("myDataSet", equalTo(honeyConfig.dataSet))
-
-        honeyConfig = HoneyConfig("KEY","myDataSet","https://foo.bar")
+        val dataSet = "data_set"
+        val writeKey = "WRITE_KEY"
+        assertThat("https://api.honeycomb.io", equalTo(HoneyConfig(writeKey, dataSet).apiHost))
+        val honeyConfig = HoneyConfig(writeKey, "myDataSet", "https://foo.bar")
         assertThat("https://foo.bar", equalTo(honeyConfig.apiHost))
+        assertThat("myDataSet", equalTo(honeyConfig.dataSet))
     }
 }

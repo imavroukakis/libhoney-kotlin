@@ -8,10 +8,12 @@ import java.time.LocalDateTime
 class TransmitTestIT {
 
 
+    private val honeyConfig = HoneyConfig(writeKey = "2f7b1e73ff46ea90a3d9937dd9715435", dataSet = "libhoney-kt-test")
+
     @Test
     fun checksTransmission() {
         val now = LocalDateTime.now()
-        val event = Event.newEvent(HoneyConfig(writeKey = "2f7b1e73ff46ea90a3d9937dd9715435", dataSet = "kotlintest"), now)
+        val event = Event.newEvent(honeyConfig, now)
                 .add("string", "bar")
                 .add("integer", 1)
                 .add("float", 1.1f)
@@ -27,7 +29,7 @@ class TransmitTestIT {
     fun checksTransmissionWithGlobalConfig() {
         GlobalConfig.dataPairs["hello"] = "world"
         val now = LocalDateTime.now()
-        val event = Event.newEvent(HoneyConfig(writeKey = "2f7b1e73ff46ea90a3d9937dd9715435", dataSet = "kotlintest"), now)
+        val event = Event.newEvent(honeyConfig, now)
                 .add("string", "bar")
                 .add("integer", 1)
                 .add("float", 1.1f)
@@ -42,9 +44,9 @@ class TransmitTestIT {
     }
 
     @Test
-    fun checksFailedTransmissionDueToMissingWriteKey() {
+    fun checksFailedTransmissionDueToInvalidWriteKey() {
         val now = LocalDateTime.now()
-        val honeyConfig = HoneyConfig(dataSet = "kotlintest")
+        val honeyConfig = HoneyConfig(writeKey = "garbage", dataSet = "kotlintest")
         val event = Event.newEvent(honeyConfig, now).add("string", "bar")
         val (_, response, _) = Transmit.blockingSend(event)
         assertThat(response.statusCode).isEqualTo(HttpURLConnection.HTTP_UNAUTHORIZED)

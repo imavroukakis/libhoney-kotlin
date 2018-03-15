@@ -6,8 +6,8 @@ import java.time.temporal.TemporalAccessor
 
 
 class Event private constructor(
-        val writeKey: String = "",
-        val dataSet: String = "",
+        val writeKey: String,
+        val dataSet: String,
         val apiHost: String = "https://api.honeycomb.io",
         val sampleRate: Int = 1,
         val timeStamp: LocalDateTime = LocalDateTime.now(),
