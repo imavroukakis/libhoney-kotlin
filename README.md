@@ -7,8 +7,19 @@ Kotlin library for sending events to [Honeycomb](https://honeycomb.io).
 
 ## Installation:
 
+### Gradle
+```
+repositories {
+    maven {
+          url  "https://dl.bintray.com/imavroukakis/maven"
+    }
+}
 
-## Example
+compile 'io.honeycomb:libhoney-kotlin:0.1'
+```
+
+
+## Usage
 
 Honeycomb can calculate all sorts of statistics, so send the values you care about and let us crunch the averages, percentiles, lower/upper bounds, cardinality -- whatever you want -- for you.
 
