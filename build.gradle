@@ -9,11 +9,15 @@ buildscript {
     }
 }
 
-group 'io.honeycomb'
-version '0.1-SNAPSHOT'
+plugins {
+    id 'com.jfrog.bintray' version '1.7.3'
+    id 'net.researchgate.release' version '2.6.0'
+}
 
-apply plugin: 'java'
+group 'io.honeycomb'
+
 apply plugin: 'kotlin'
+apply plugin: 'maven-publish'
 
 sourceCompatibility = 1.8
 
@@ -41,4 +45,48 @@ compileTestKotlin {
 
 test {
     exclude '**/*IT.class'
+}
+
+bintray {
+    user = System.getenv('BINTRAY_USER')
+    key = System.getenv('BINTRAY_KEY')
+    publications = ['mavenJava']
+    pkg {
+        repo = 'maven'
+        name = project.name
+        licenses = ['Apache-2.0']
+        vcsUrl = 'https://github.com/imavroukakis/libhoney-kotlin.git'
+        version {
+            name = project.version
+            released = new Date()
+        }
+    }
+}
+
+task sourcesJar(type: Jar, dependsOn: project.classes) {
+    from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar, dependsOn: project.javadoc) {
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives sourcesJar, javadocJar
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId project.bintray.pkg.name
+            from components.java
+
+            artifact sourcesJar {
+                classifier = 'sources'
+            }
+            artifact javadocJar {
+                classifier = 'javadoc'
+            }
+        }
+    }
 }
