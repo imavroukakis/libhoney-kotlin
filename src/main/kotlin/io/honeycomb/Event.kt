@@ -1,7 +1,6 @@
 package io.honeycomb
 
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME
 import java.time.temporal.TemporalAccessor
 
 
@@ -60,7 +59,7 @@ class Event private constructor(
     fun add(attribute: String, value: Any): Event {
         return when (value) {
             is TemporalAccessor ->
-                Event(this, attribute to ISO_LOCAL_DATE_TIME.format(value))
+                Event(this, attribute to toRfc3339(value))
             is LongRange ->
                 Event(this, attribute to listOf(value).flatten())
             is IntRange ->

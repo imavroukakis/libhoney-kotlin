@@ -3,7 +3,6 @@ package io.honeycomb
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 class EventTest {
 
@@ -44,7 +43,7 @@ class EventTest {
             assertThat(t["integer"]).isEqualTo(1)
             assertThat(t["float"]).isEqualTo(1.1f)
             assertThat(t["bool"]).isEqualTo(true)
-            assertThat(t["date"]).isEqualTo(DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(now))
+            assertThat(t["date"]).isEqualTo(toRfc3339(now))
             assertThat(t["array"]).isEqualTo(listOf(1, 2, 3, 4))
             assertThat(t["range"]).isEqualTo(listOf(1, 2, 3, 4))
         }

@@ -8,7 +8,7 @@ import java.time.LocalDateTime
 class TransmitIntegrationTest {
 
 
-    private val honeyConfig = HoneyConfig(writeKey = "2f7b1e73ff46ea90a3d9937dd9715435", dataSet = "libhoney-kt-test")
+    private val honeyConfig = HoneyConfig(writeKey = System.getenv("WRITE_KEY"), dataSet = "libhoney-kt-test")
 
     @Test
     fun checksTransmission() {
