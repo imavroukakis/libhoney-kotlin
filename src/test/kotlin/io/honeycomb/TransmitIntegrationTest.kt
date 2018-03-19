@@ -5,7 +5,7 @@ import org.junit.Test
 import java.net.HttpURLConnection
 import java.time.LocalDateTime
 
-class TransmitTestIT {
+class TransmitIntegrationTest {
 
 
     private val honeyConfig = HoneyConfig(writeKey = "2f7b1e73ff46ea90a3d9937dd9715435", dataSet = "libhoney-kt-test")

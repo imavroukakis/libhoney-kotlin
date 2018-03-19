@@ -23,7 +23,7 @@ compile 'io.honeycomb:libhoney-kotlin:0.1'
 
 Honeycomb can calculate all sorts of statistics, so send the values you care about and let us crunch the averages, percentiles, lower/upper bounds, cardinality -- whatever you want -- for you.
 
-### Create Event
+### Events
 #### Using `HoneyConfig`
 ```kotlin
 val event =
@@ -50,7 +50,7 @@ val event =
 ```
 
 
-### Send event and block for result
+#### Send event and block for result
 ```kotlin
 val event =
     Event.newEvent(HoneyConfig(writeKey = "YOUR_KEY", dataSet = "test_data"), LocalDateTime.now())
@@ -65,7 +65,7 @@ val event =
 val (_, response, _) = Transmit.sendBlocking(event)
 ```
 
-### Send event async
+#### Send event async
 ```kotlin
 val event =
     Event.newEvent(HoneyConfig(writeKey = "YOUR_KEY", dataSet = "test_data"), LocalDateTime.now())
@@ -80,6 +80,28 @@ val event =
 Transmit.send(event)
 ```
 
+### Markers
+#### Create Marker
+```kotlin
+val marker = Marker(LocalDateTime.now().minusHours(1).toEpochSecond(ZoneOffset.UTC),
+        LocalDateTime.now().toEpochSecond(ZoneOffset.UTC),
+        message = "marker created",
+        type = "integration test",
+        url = "http://foo")
+val result = Transmit.createMarker(marker, honeyConfig)
+```
+#### Update marker
+Using `result` from the _Create Marker_ example
+```kotlin
+val modifiedStartTime = LocalDateTime.now().minusHours(5).toEpochSecond(ZoneOffset.UTC)
+val modifiedMarkerResult = Transmit.updateMarker(
+        result.get().copy(startTime = modifiedStartTime, message = "marker updated"), honeyConfig)
+```
+#### Delete marker
+Using `modifiedMarkerResult` from the _Update Marker_ example
+```kotlin
+val removedMarkerResult = Transmit.removeMarker(modifiedMarkerResult.get(), honeyConfig)
+```
 ## Contributions
 
 Features, bug fixes and other changes to libhoney-kotlin are gladly accepted. Please
