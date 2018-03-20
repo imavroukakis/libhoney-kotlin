@@ -102,6 +102,10 @@ Using `modifiedMarkerResult` from the _Update Marker_ example
 ```kotlin
 val removedMarkerResult = Transmit.removeMarker(modifiedMarkerResult.get(), honeyConfig)
 ```
+#### Get all markers
+```kotlin
+val allMarkers : List<Marker> = Transmit.allMarkers(honeyConfig).get()
+```
 ## Contributions
 
 Features, bug fixes and other changes to libhoney-kotlin are gladly accepted. Please
