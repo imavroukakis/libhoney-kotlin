@@ -17,7 +17,7 @@ object Transmit {
     private const val EVENTS_PATH = "/1/events/"
     private const val MARKERS_PATH = "/1/markers/"
     private val contentType = "Content-Type" to "application/json"
-    private val userAgent = "User-Agent" to "libhoney-kt/0.0.2"
+    private val userAgent = "User-Agent" to "libhoney-kt/0.0.3"
 
     /**
      * Transmits an [Event] to the API. Optionally merges in [GlobalConfig.dataPairs] before transmission
