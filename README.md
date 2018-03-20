@@ -15,7 +15,7 @@ repositories {
     }
 }
 
-compile 'io.honeycomb:libhoney-kotlin:0.3'
+compile 'io.honeycomb:libhoney-kotlin:0.0.3'
 ```
 
 
