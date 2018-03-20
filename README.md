@@ -1,7 +1,7 @@
 # libhoney for Kotlin
 
 [![CircleCI](https://circleci.com/gh/imavroukakis/libhoney-kotlin.svg?style=shield)](https://circleci.com/gh/imavroukakis/libhoney-kotlin)
-[ ![Download](https://api.bintray.com/packages/imavroukakis/maven/libhoney-kotlin/images/download.svg?version=0.0.2) ](https://bintray.com/imavroukakis/maven/libhoney-kotlin/0.0.2/link)
+[ ![Download](https://api.bintray.com/packages/imavroukakis/maven/libhoney-kotlin/images/download.svg?version=0.0.3) ](https://bintray.com/imavroukakis/maven/libhoney-kotlin/0.0.3/link)
 
 Kotlin library for sending events to [Honeycomb](https://honeycomb.io).
 
@@ -15,7 +15,7 @@ repositories {
     }
 }
 
-compile 'io.honeycomb:libhoney-kotlin:0.1'
+compile 'io.honeycomb:libhoney-kotlin:0.3'
 ```
 
 
