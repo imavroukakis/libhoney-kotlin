@@ -1,6 +1,7 @@
 package io.honeycomb
 
 import com.beust.klaxon.Klaxon
+import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.core.*
 import com.github.kittinunf.fuel.core.Method.*
 import com.github.kittinunf.fuel.httpPost
@@ -98,6 +99,28 @@ object Transmit {
     }
 
     /**
+     * Lists all existing [Marker]
+     *
+     * This is a _blocking_ request and you will need to handle the result
+     *
+     * @param honeyConfig the [HoneyConfig]
+     *
+     * @return the [Result], contains a list of [Marker] instances or an exception if the call failed
+     */
+    fun allMarkers(honeyConfig: HoneyConfig): Result<List<Marker>, Exception> {
+        val (_, _, result) = markerRequest(honeyConfig).responseString()
+        return when (result) {
+            is Result.Failure -> {
+                Result.error(result.error)
+            }
+            is Result.Success -> {
+                Result.of(Klaxon().parseArray(result.get()))
+            }
+        }
+    }
+
+
+    /**
      * Transmits an [Event] to the API. Optionally merges in [GlobalConfig.dataPairs] before transmission
      *
      * This is an _async_ request
@@ -124,6 +147,15 @@ object Transmit {
                         HONEYCOMB_EVENT_TIME to event.timeStamp,
                         HONEYCOMB_SAMPLE_RATE to event.sampleRate)
                 .body(toJsonString(event))
+    }
+
+    private fun markerRequest(honeyConfig: HoneyConfig): Request {
+        val honeyUri = honeyConfig.apiHost + MARKERS_PATH + honeyConfig.dataSet
+        return Fuel.Companion.get(honeyUri)
+                .header(HONEYCOMB_TEAM_HEADER to honeyConfig.writeKey,
+                        contentType,
+                        userAgent)
+                .body("")
     }
 
     private fun markerRequest(marker: Marker, method: Method, honeyConfig: HoneyConfig): Request {

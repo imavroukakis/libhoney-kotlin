@@ -32,6 +32,12 @@ class MarkerIntegrationTest {
         assertThat(modifiedMarkerResult.get().startTime).isEqualTo(modifiedStartTime)
         logger.info { "Updated marker with id ${modifiedMarkerResult.get().id}" }
 
+        val allMarkers = Transmit.allMarkers(honeyConfig).get()
+        assertThat(allMarkers).isNotEmpty
+        assertThat(allMarkers.size).isEqualTo(1)
+
+        assertThat(modifiedMarkerResult.get().startTime).isEqualTo(modifiedStartTime)
+
         val removedMarkerResult = Transmit.removeMarker(modifiedMarkerResult.get(), honeyConfig)
         assertThat(removedMarkerResult).isInstanceOf(Result.Success::class.java)
         logger.info { "Removed marker with id ${removedMarkerResult.get().id}" }
