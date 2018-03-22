@@ -10,9 +10,7 @@ Kotlin library for sending events to [Honeycomb](https://honeycomb.io).
 ### Gradle
 ```
 repositories {
-    maven {
-          url  "https://dl.bintray.com/imavroukakis/maven"
-    }
+   jcenter()
 }
 
 compile 'io.honeycomb:libhoney-kotlin:0.0.3'
