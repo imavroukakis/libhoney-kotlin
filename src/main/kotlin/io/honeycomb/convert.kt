@@ -1,5 +1,6 @@
 package io.honeycomb
 
+import com.beust.klaxon.JsonArray
 import com.beust.klaxon.JsonObject
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAccessor
@@ -14,16 +15,30 @@ fun toJsonString(event: Event): String = toJson(event).toJsonString()
 
 fun toJsonString(marker: Marker): String = toJson(marker).toJsonString()
 
-fun toJson(event: Event): JsonObject = JsonObject(event.data)
+fun toJsonString(events: List<Event>): String = toJson(events).toJsonString()
+
+private fun toJson(events: List<Event>): JsonArray<JsonObject> {
+    val jsonArray = JsonArray<JsonObject>()
+    for (event in events) {
+        val jsonObject = JsonObject()
+        jsonObject["time"] = toRfc3339(event.timeStamp)
+        jsonObject["samplerate"] = event.sampleRate
+        jsonObject["data"]= toJson(event)
+        jsonArray.add(jsonObject)
+    }
+    return jsonArray
+}
 
 fun toJson(marker: Marker): JsonObject {
-    var jsonObject = JsonObject()
+    val jsonObject = JsonObject()
     with(marker) {
-        startTime?.apply { jsonObject.put("start_time", this) }
-        endTime?.apply { jsonObject.put("end_time", this) }
-        message.apply { jsonObject.put("message", this) }
-        type.apply { jsonObject.put("type", this) }
-        url.apply { jsonObject.put("url", this) }
+        startTime?.apply { jsonObject["start_time"] = this }
+        endTime?.apply { jsonObject["end_time"] = this }
+        message.apply { jsonObject["message"] = this }
+        type.apply { jsonObject["type"] = this }
+        url.apply { jsonObject["url"] = this }
     }
     return jsonObject
 }
+
+fun toJson(event: Event): JsonObject = JsonObject(event.data)

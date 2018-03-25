@@ -1,13 +1,14 @@
 # libhoney for Kotlin
 
 [![CircleCI](https://circleci.com/gh/imavroukakis/libhoney-kotlin.svg?style=shield)](https://circleci.com/gh/imavroukakis/libhoney-kotlin)
-[ ![Download](https://api.bintray.com/packages/imavroukakis/maven/libhoney-kotlin/images/download.svg?version=0.0.3) ](https://bintray.com/imavroukakis/maven/libhoney-kotlin/0.0.3/link)
+[ ![Download](https://api.bintray.com/packages/imavroukakis/maven/libhoney-kotlin/images/download.svg?version=0.0.4) ](https://bintray.com/imavroukakis/maven/libhoney-kotlin/0.0.4/link)
 
 Kotlin library for sending events to [Honeycomb](https://honeycomb.io).
 
 ## Installation:
 
 ### Gradle
+
 ```
 repositories {
    jcenter()
@@ -22,8 +23,10 @@ compile 'io.honeycomb:libhoney-kotlin:0.0.3'
 Honeycomb can calculate all sorts of statistics, so send the values you care about and let us crunch the averages, percentiles, lower/upper bounds, cardinality -- whatever you want -- for you.
 
 ### Events
+
 #### Using `HoneyConfig`
-```kotlin
+
+```
 val event =
     Event.newEvent(HoneyConfig(writeKey = "YOUR_KEY", dataSet = "test_data"), LocalDateTime.now())
       .add("string", "bar")
@@ -34,8 +37,10 @@ val event =
       .add("array", listOf(1, 2, 3, 4))
       .add("range", 1..4)
 ```
+
 #### Standalone
-```kotlin
+
+```
 val event =
     Event.newEvent(writeKey = "write_key",dataSet = "your_data_set",timeStamp = LocalDateTime.now())
       .add("string", "bar")
@@ -49,7 +54,8 @@ val event =
 
 
 #### Send event and block for result
-```kotlin
+
+```
 val event =
     Event.newEvent(HoneyConfig(writeKey = "YOUR_KEY", dataSet = "test_data"), LocalDateTime.now())
       .add("string", "bar")
@@ -64,7 +70,8 @@ val (_, response, _) = Transmit.sendBlocking(event)
 ```
 
 #### Send event async
-```kotlin
+
+```
 val event =
     Event.newEvent(HoneyConfig(writeKey = "YOUR_KEY", dataSet = "test_data"), LocalDateTime.now())
       .add("string", "bar")
@@ -78,9 +85,34 @@ val event =
 Transmit.send(event)
 ```
 
+#### Batch send events
+
+```
+val event1 = Event.newEvent(honeyConfig, LocalDateTime.now())
+                .add("string", "bar")
+                .add("integer", 1)
+                .add("float", 1.1f)
+                .add("bool", true)
+                .add("date", LocalDateTime.now())
+                .add("array", listOf(1, 2, 3, 4))
+                .add("range", 1..4)
+val event2 = Event.newEvent(honeyConfig, LocalDateTime.now())
+                .add("string", "bar")
+                .add("integer", 1)
+                .add("float", 1.1f)
+                .add("bool", true)
+                .add("date", LocalDateTime.now())
+                .add("array", listOf(1, 2, 3, 4))
+                .add("range", 1..4)
+val (_, response, result) = Transmit.blockingSend(listOf(event1, event2), honeyConfig)
+assertThat(response.statusCode).isEqualTo(HttpURLConnection.HTTP_OK)
+```
+
 ### Markers
+
 #### Create Marker
-```kotlin
+
+```
 val marker = Marker(LocalDateTime.now().minusHours(1).toEpochSecond(ZoneOffset.UTC),
         LocalDateTime.now().toEpochSecond(ZoneOffset.UTC),
         message = "marker created",
@@ -88,22 +120,29 @@ val marker = Marker(LocalDateTime.now().minusHours(1).toEpochSecond(ZoneOffset.U
         url = "http://foo")
 val result = Transmit.createMarker(marker, honeyConfig)
 ```
+
 #### Update marker
+
 Using `result` from the _Create Marker_ example
-```kotlin
+```
 val modifiedStartTime = LocalDateTime.now().minusHours(5).toEpochSecond(ZoneOffset.UTC)
 val modifiedMarkerResult = Transmit.updateMarker(
         result.get().copy(startTime = modifiedStartTime, message = "marker updated"), honeyConfig)
 ```
+
 #### Delete marker
+
 Using `modifiedMarkerResult` from the _Update Marker_ example
-```kotlin
+```
 val removedMarkerResult = Transmit.removeMarker(modifiedMarkerResult.get(), honeyConfig)
 ```
+
 #### Get all markers
-```kotlin
+
+```
 val allMarkers : List<Marker> = Transmit.allMarkers(honeyConfig).get()
 ```
+
 ## Contributions
 
 Features, bug fixes and other changes to libhoney-kotlin are gladly accepted. Please
