@@ -35,3 +35,7 @@ jobs:
 
       # run all tests
       - run: gradle check
+      # coverage report
+      - run:
+          name: Coverage report
+          command: 'bash <(curl -s https://codecov.io/bash)'
