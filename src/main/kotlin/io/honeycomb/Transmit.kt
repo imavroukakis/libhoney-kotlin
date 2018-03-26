@@ -11,14 +11,20 @@ import mu.KotlinLogging
 object Transmit {
 
     private val logger = KotlinLogging.logger {}
-    private const val HONEYCOMB_TEAM_HEADER = "X-Honeycomb-Team"
-    private const val HONEYCOMB_EVENT_TIME = "X-Honeycomb-io.honeycomb.Event-Time"
-    private const val HONEYCOMB_SAMPLE_RATE = "X-Honeycomb-Samplerate"
+    private const val HEADER_HONEYCOMB_TEAM = "X-Honeycomb-Team"
+    private const val HEADER_HONEYCOMB_EVENT_TIME = "X-Honeycomb-io.honeycomb.Event-Time"
+    private const val HEADER_HONEYCOMB_SAMPLE_RATE = "X-Honeycomb-Samplerate"
     private const val EVENTS_PATH = "/1/events/"
     private const val BATCH_EVENTS_PATH = "/1/batch/"
     private const val MARKERS_PATH = "/1/markers/"
-    private val contentType = "Content-Type" to "application/json"
-    private val userAgent = "User-Agent" to "libhoney-kt/0.0.4"
+
+    init {
+        FuelManager.instance.baseHeaders = mapOf(
+                "Content-Type" to "application/json",
+                "User-Agent" to "libhoney-kt/0.0.4"
+        )
+    }
+
 
     /**
      * Transmits an [Event] to the API. Optionally merges in [GlobalConfig.dataPairs] before transmission
@@ -158,29 +164,23 @@ object Transmit {
 
     private fun eventRequest(honeyUri: String, event: Event): Request {
         return honeyUri.httpPost()
-                .header(HONEYCOMB_TEAM_HEADER to event.writeKey,
-                        contentType,
-                        userAgent,
-                        HONEYCOMB_EVENT_TIME to event.timeStamp,
-                        HONEYCOMB_SAMPLE_RATE to event.sampleRate)
+                .header(HEADER_HONEYCOMB_TEAM to event.writeKey,
+                        HEADER_HONEYCOMB_EVENT_TIME to event.timeStamp,
+                        HEADER_HONEYCOMB_SAMPLE_RATE to event.sampleRate)
                 .body(toJsonString(event))
     }
 
     private fun eventRequest(honeyUri: String, honeyConfig: HoneyConfig, events: List<Event>): Request {
         return honeyUri.httpPost()
-                .header(HONEYCOMB_TEAM_HEADER to honeyConfig.writeKey,
-                        contentType,
-                        userAgent)
+                .header(HEADER_HONEYCOMB_TEAM to honeyConfig.writeKey)
                 .body(toJsonString(events))
     }
 
 
     private fun markerRequest(honeyConfig: HoneyConfig): Request {
-        val honeyUri = honeyConfig.apiHost + MARKERS_PATH + honeyConfig.dataSet
+        val honeyUri = "${honeyConfig.apiHost}$MARKERS_PATH${honeyConfig.dataSet}"
         return honeyUri.httpGet()
-                .header(HONEYCOMB_TEAM_HEADER to honeyConfig.writeKey,
-                        contentType,
-                        userAgent)
+                .header(HEADER_HONEYCOMB_TEAM to honeyConfig.writeKey)
                 .body("")
     }
 
@@ -189,15 +189,15 @@ object Transmit {
         val honeyUri: String
         when (method) {
             POST -> {
-                honeyUri = honeyConfig.apiHost + MARKERS_PATH + honeyConfig.dataSet
+                honeyUri = "${honeyConfig.apiHost}$MARKERS_PATH${honeyConfig.dataSet}"
                 body = toJsonString(marker)
             }
             PUT -> {
-                honeyUri = honeyConfig.apiHost + MARKERS_PATH + honeyConfig.dataSet + "/" + marker.id
+                honeyUri = "${honeyConfig.apiHost}$MARKERS_PATH${honeyConfig.dataSet}/${marker.id}"
                 body = toJsonString(marker)
             }
             DELETE -> {
-                honeyUri = honeyConfig.apiHost + MARKERS_PATH + honeyConfig.dataSet + "/" + marker.id
+                honeyUri = "${honeyConfig.apiHost}$MARKERS_PATH${honeyConfig.dataSet}/${marker.id}"
                 body = ""
             }
             else -> {
@@ -206,9 +206,7 @@ object Transmit {
             }
         }
         return FuelManager.instance.request(method, honeyUri)
-                .header(HONEYCOMB_TEAM_HEADER to honeyConfig.writeKey,
-                        contentType,
-                        userAgent)
+                .header(HEADER_HONEYCOMB_TEAM to honeyConfig.writeKey)
                 .body(body)
     }
 }
