@@ -23,7 +23,7 @@ private fun toJson(events: List<Event>): JsonArray<JsonObject> {
         val jsonObject = JsonObject()
         jsonObject["time"] = toRfc3339(event.timeStamp)
         jsonObject["samplerate"] = event.sampleRate
-        jsonObject["data"]= toJson(event)
+        jsonObject["data"] = toJson(event)
         jsonArray.add(jsonObject)
     }
     return jsonArray
@@ -32,8 +32,8 @@ private fun toJson(events: List<Event>): JsonArray<JsonObject> {
 fun toJson(marker: Marker): JsonObject {
     val jsonObject = JsonObject()
     with(marker) {
-        startTime?.apply { jsonObject["start_time"] = this }
-        endTime?.apply { jsonObject["end_time"] = this }
+        startTime.takeIf { it != -1L }.apply { jsonObject["start_time"] = this }
+        endTime.takeIf { it != -1L }.apply { jsonObject["end_time"] = this }
         message.apply { jsonObject["message"] = this }
         type.apply { jsonObject["type"] = this }
         url.apply { jsonObject["url"] = this }

@@ -35,6 +35,7 @@ class MarkerIntegrationTest {
         val allMarkers = Transmit.allMarkers(honeyConfig).get()
         assertThat(allMarkers).isNotEmpty
         assertThat(allMarkers.size).isEqualTo(1)
+        logger.info { "found ${allMarkers.size} markers" }
 
         assertThat(modifiedMarkerResult.get().startTime).isEqualTo(modifiedStartTime)
 

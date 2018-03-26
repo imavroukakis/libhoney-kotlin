@@ -4,9 +4,9 @@ import com.beust.klaxon.Json
 
 data class Marker(
         @Json(name = "start_time")
-        val startTime: Long?,
+        val startTime: Long = -1,
         @Json(name = "end_time")
-        val endTime: Long? = null,
+        val endTime: Long = -1,
         val message: String = "",
         val type: String = "",
         val url: String = "",

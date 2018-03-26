@@ -14,6 +14,9 @@ class EventTest {
     fun checksDefaults() {
         val now = LocalDateTime.now()
         val event = Event.newEvent(honeyConfig)
+        assertThat(event.writeKey).isNotBlank().isEqualTo(writeKey)
+        assertThat(event.dataSet).isNotBlank().isEqualTo(dataSet)
+        assertThat(event.apiHost).isNotBlank().isEqualTo("https://api.honeycomb.io")
         assertThat(event.timeStamp).isNotNull()
         assertThat(event.timeStamp).isAfterOrEqualTo(now)
         assertThat(event.sampleRate).isEqualTo(1)
