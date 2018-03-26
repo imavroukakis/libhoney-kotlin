@@ -105,6 +105,7 @@ jacocoTestReport {
 }
 
 task jacocoMerge(type: JacocoMerge) {
+    dependsOn jacocoTestReport
     executionData test, integrationTest
 }
 
@@ -114,6 +115,7 @@ task mergedReport(type: JacocoReport) {
     reports {
         html.enabled = false
         xml.enabled = true
+        xml.destination file("${buildDir}/reports/jacoco/test/jacocoTestReport.xml")
         csv.enabled = false
     }
     sourceDirectories = files(sourceSets.main.kotlin.srcDirs, sourceSets.integrationTest.kotlin.srcDirs)
