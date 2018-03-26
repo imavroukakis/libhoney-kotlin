@@ -113,13 +113,13 @@ task mergedReport(type: JacocoReport) {
     executionData jacocoMerge.destinationFile
     dependsOn jacocoMerge
     reports {
-        html.enabled = false
+        html.enabled = true
         xml.enabled = true
         xml.destination file("${buildDir}/reports/jacoco/test/jacocoTestReport.xml")
         csv.enabled = false
     }
-    sourceDirectories = files(sourceSets.main.kotlin.srcDirs, sourceSets.integrationTest.kotlin.srcDirs)
-    classDirectories = files(sourceSets.main.output.classesDirs, sourceSets.integrationTest.output.classesDirs)
+    sourceDirectories = files(sourceSets.main.kotlin.srcDirs)
+    classDirectories = files(sourceSets.main.output.classesDirs)
 }
 
 afterReleaseBuild.dependsOn bintrayUpload
