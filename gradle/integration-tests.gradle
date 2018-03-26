@@ -22,5 +22,13 @@ task integrationTest(type: Test) {
     classpath = sourceSets.integrationTest.runtimeClasspath
 }
 
+integrationTest {
+    jacoco {
+        append = false
+        destinationFile = file("$buildDir/jacoco-it/jacocoTest.exec")
+        classDumpDir = file("$buildDir/jacoco-it/classpathdumps")
+    }
+}
+
 // Make sure 'check' task calls integration test
 check.dependsOn integrationTest

@@ -18,7 +18,7 @@ plugins {
 group 'io.honeycomb'
 
 apply plugin: 'kotlin'
-apply plugin: "jacoco"
+apply plugin: 'jacoco'
 apply plugin: 'maven-publish'
 apply from : 'gradle/integration-tests.gradle'
 
@@ -102,6 +102,10 @@ jacocoTestReport {
         xml.enabled = true
         csv.enabled = false
     }
+}
+
+task jacocoMerge(type: JacocoMerge) {
+    executionData test, integrationTest
 }
 
 afterReleaseBuild.dependsOn bintrayUpload
