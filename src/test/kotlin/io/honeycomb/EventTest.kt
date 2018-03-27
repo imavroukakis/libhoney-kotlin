@@ -13,7 +13,15 @@ class EventTest {
     @Test
     fun checksDefaults() {
         val now = LocalDateTime.now()
-        val event = Event.newEvent(honeyConfig)
+        var event = Event.newEvent(honeyConfig)
+        assertThat(event.writeKey).isNotBlank().isEqualTo(writeKey)
+        assertThat(event.dataSet).isNotBlank().isEqualTo(dataSet)
+        assertThat(event.apiHost).isNotBlank().isEqualTo("https://api.honeycomb.io")
+        assertThat(event.timeStamp).isNotNull()
+        assertThat(event.timeStamp).isAfterOrEqualTo(now)
+        assertThat(event.sampleRate).isEqualTo(1)
+
+        event = Event.newEvent(writeKey = writeKey,dataSet = dataSet,timeStamp = now)
         assertThat(event.writeKey).isNotBlank().isEqualTo(writeKey)
         assertThat(event.dataSet).isNotBlank().isEqualTo(dataSet)
         assertThat(event.apiHost).isNotBlank().isEqualTo("https://api.honeycomb.io")
@@ -40,6 +48,7 @@ class EventTest {
                 .add("date", now)
                 .add("array", listOf(1, 2, 3, 4))
                 .add("range", 1..4)
+                .add("long_range",1L..4L)
         assertThat(toJson(event)).isNotEmpty
         assertThat(toJson(event)).satisfies { t ->
             assertThat(t["string"]).isEqualTo("bar")
@@ -49,6 +58,7 @@ class EventTest {
             assertThat(t["date"]).isEqualTo(toRfc3339(now))
             assertThat(t["array"]).isEqualTo(listOf(1, 2, 3, 4))
             assertThat(t["range"]).isEqualTo(listOf(1, 2, 3, 4))
+            assertThat(t["long_range"]).isEqualTo(listOf(1L, 2L, 3L, 4L))
         }
     }
 }
