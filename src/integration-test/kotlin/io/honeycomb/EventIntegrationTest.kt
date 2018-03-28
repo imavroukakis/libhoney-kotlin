@@ -30,7 +30,7 @@ class EventIntegrationTest {
 
     @Test
     fun checksTransmissionWithGlobalConfig() {
-        GlobalConfig.dataPairs["hello"] = "world"
+        GlobalConfig.addField("hello","world")
         val now = LocalDateTime.now()
         val event = Event.newEvent(honeyConfig, now)
                 .add("string", "bar")

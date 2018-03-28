@@ -5,7 +5,7 @@ import com.beust.klaxon.JsonObject
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAccessor
 
-private val dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSS'Z'")
+internal val dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSS'Z'")
 
 fun toRfc3339(temporalAccessor: TemporalAccessor): String {
     return dateFormat.format(temporalAccessor)

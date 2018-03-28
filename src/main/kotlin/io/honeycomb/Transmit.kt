@@ -35,8 +35,8 @@ object Transmit {
      * @return the response [Triple]
      */
     fun blockingSend(event: Event): Triple<Request, Response, Result<String, FuelError>> {
-        val evt = event.add(GlobalConfig.dataPairs)
-        return eventRequest("${evt.apiHost}$EVENTS_PATH${evt.dataSet}", evt).responseString()
+        val eventsWithGlobalPairs = GlobalConfig.applyFields(event)
+        return eventRequest("${eventsWithGlobalPairs.apiHost}$EVENTS_PATH${eventsWithGlobalPairs.dataSet}", eventsWithGlobalPairs).responseString()
     }
 
     /**
@@ -48,7 +48,7 @@ object Transmit {
      * @return the response [Triple]
      */
     fun blockingSend(events: List<Event>, honeyConfig: HoneyConfig): Triple<Request, Response, Result<String, FuelError>> {
-        val eventsWithGlobalPairs = events.map { it.add(GlobalConfig.dataPairs) }
+        val eventsWithGlobalPairs = events.map { GlobalConfig.applyFields(it) }
         return eventRequest(
                 "${honeyConfig.apiHost}$BATCH_EVENTS_PATH${honeyConfig.dataSet}",
                 honeyConfig,
@@ -64,7 +64,7 @@ object Transmit {
      * @param event the [Event] to transmit
      */
     fun send(event: Event) {
-        val evt = event.add(GlobalConfig.dataPairs)
+        val evt = GlobalConfig.applyFields(event)
         eventRequest("${evt.apiHost}$EVENTS_PATH${evt.dataSet}", evt)
                 .responseString { _, response, result ->
                     result.fold({ _ ->
