@@ -145,7 +145,7 @@ val allMarkers : List<Marker> = Transmit.allMarkers(honeyConfig).get()
 
 ## Global fields
 
-Use `GlobalConfig`, if you have common fields that you would to send with every `Event`. They can either be constant, or dynamic (expressed as a function). Dynamic fields are evaluated right before the event is transmitted.
+Use `GlobalConfig`, if you have common fields that you would like to send with every `Event`. They can either be constant, or dynamic (expressed as a function). Dynamic fields are evaluated right before the event is transmitted.
 
 ### Constant fields
 
