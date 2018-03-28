@@ -21,13 +21,13 @@ object Transmit {
     init {
         FuelManager.instance.baseHeaders = mapOf(
                 "Content-Type" to "application/json",
-                "User-Agent" to "libhoney-kt/0.0.4"
+                "User-Agent" to "libhoney-kt/0.0.5"
         )
     }
 
 
     /**
-     * Transmits an [Event] to the API. Optionally merges in [GlobalConfig.dataPairs] before transmission
+     * Transmits an [Event] to the API. Optionally merges in [GlobalConfig] before transmission
      *
      * This is a _blocking_ request and you will need to handle the result
      *
@@ -40,7 +40,7 @@ object Transmit {
     }
 
     /**
-     * Batch transmits events to the API. Optionally merges in [GlobalConfig.dataPairs] before transmission
+     * Batch transmits events to the API. Optionally merges in [GlobalConfig] before transmission
      *
      * This is a _blocking_ request and you will need to handle the result
      *
@@ -57,7 +57,7 @@ object Transmit {
     }
 
     /**
-     * Transmits an [Event] to the API. Optionally merges in [GlobalConfig.dataPairs] before transmission
+     * Transmits an [Event] to the API. Optionally merges in [GlobalConfig] before transmission
      *
      * This is an _async_ request
      *
