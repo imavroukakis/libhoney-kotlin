@@ -15,13 +15,13 @@ class GlobalConfigTest {
     fun dynamicFields() {
         val totalMemory = Runtime.getRuntime().totalMemory()
         val freeMemory = Runtime.getRuntime().freeMemory()
-        GlobalConfig.addDynamicField { Pair("heap_total", Runtime.getRuntime().totalMemory()) }
-        GlobalConfig.addDynamicField { Pair("heap_free", Runtime.getRuntime().freeMemory()) }
-        GlobalConfig.addDynamicField { Pair("time", LocalDateTime.now()) }
+        GlobalConfig.addField { Pair("heap_total", Runtime.getRuntime().totalMemory()) }
+        GlobalConfig.addField { Pair("heap_free", Runtime.getRuntime().freeMemory()) }
+        GlobalConfig.addField { Pair("time", LocalDateTime.now()) }
 
         val now = LocalDateTime.now()
         Thread.sleep(100)
-        val event = GlobalConfig.applyDynamicFields(Event.newEvent(honeyConfig))
+        val event = GlobalConfig.applyFields(Event.newEvent(honeyConfig))
         // assert that the higher order function is not applied when added
         val dynamicDate = LocalDateTime.parse(event.data["time"] as String, dateFormat)
         assertThat(event.data["heap_total"] as Long).isPositive().isCloseTo(totalMemory, Percentage.withPercentage(5.0))
@@ -31,7 +31,7 @@ class GlobalConfigTest {
 
     @Test
     fun staticFields() {
-        GlobalConfig.addField("num",1.0f)
+        GlobalConfig.addField("num", 1.0f)
         val event = GlobalConfig.applyFields(Event.newEvent(honeyConfig))
         assertThat(event.data["num"] as Float).isEqualTo(1.0f)
     }

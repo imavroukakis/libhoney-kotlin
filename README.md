@@ -22,9 +22,9 @@ compile 'io.honeycomb:libhoney-kotlin:0.0.3'
 
 Honeycomb can calculate all sorts of statistics, so send the values you care about and let us crunch the averages, percentiles, lower/upper bounds, cardinality -- whatever you want -- for you.
 
-### Events
+## Events
 
-#### Using `HoneyConfig`
+### Using `HoneyConfig`
 
 ```
 val event =
@@ -38,7 +38,7 @@ val event =
       .add("range", 1..4)
 ```
 
-#### Standalone
+### Standalone
 
 ```
 val event =
@@ -53,7 +53,7 @@ val event =
 ```
 
 
-#### Send event and block for result
+### Send event and block for result
 
 ```
 val event =
@@ -69,7 +69,7 @@ val event =
 val (_, response, _) = Transmit.sendBlocking(event)
 ```
 
-#### Send event async
+### Send event async
 
 ```
 val event =
@@ -85,7 +85,7 @@ val event =
 Transmit.send(event)
 ```
 
-#### Batch send events
+### Batch send events
 
 ```
 val event1 = Event.newEvent(honeyConfig, LocalDateTime.now())
@@ -108,9 +108,9 @@ val (_, response, result) = Transmit.blockingSend(listOf(event1, event2), honeyC
 assertThat(response.statusCode).isEqualTo(HttpURLConnection.HTTP_OK)
 ```
 
-### Markers
+## Markers
 
-#### Create Marker
+### Create Marker
 
 ```
 val marker = Marker(LocalDateTime.now().minusHours(1).toEpochSecond(ZoneOffset.UTC),
@@ -121,7 +121,7 @@ val marker = Marker(LocalDateTime.now().minusHours(1).toEpochSecond(ZoneOffset.U
 val result = Transmit.createMarker(marker, honeyConfig)
 ```
 
-#### Update marker
+### Update marker
 
 Using `result` from the _Create Marker_ example
 ```
@@ -130,17 +130,35 @@ val modifiedMarkerResult = Transmit.updateMarker(
         result.get().copy(startTime = modifiedStartTime, message = "marker updated"), honeyConfig)
 ```
 
-#### Delete marker
+### Delete marker
 
 Using `modifiedMarkerResult` from the _Update Marker_ example
 ```
 val removedMarkerResult = Transmit.removeMarker(modifiedMarkerResult.get(), honeyConfig)
 ```
 
-#### Get all markers
+### Get all markers
 
 ```
 val allMarkers : List<Marker> = Transmit.allMarkers(honeyConfig).get()
+```
+
+## Global fields
+
+Use `GlobalConfig`, if you have common fields that you would to send with every `Event`. They can either be constant, or dynamic (expressed as a function). Dynamic fields are evaluated right before the event is transmitted.
+
+### Constant fields
+
+```
+GlobalConfig.addField("num", 1.0f)
+```
+
+### Dynamic fields
+
+```
+GlobalConfig.addField { Pair("heap_total", Runtime.getRuntime().totalMemory()) }
+GlobalConfig.addField { Pair("heap_free", Runtime.getRuntime().freeMemory()) }
+GlobalConfig.addField { Pair("time", LocalDateTime.now()) }
 ```
 
 ## Contributions
