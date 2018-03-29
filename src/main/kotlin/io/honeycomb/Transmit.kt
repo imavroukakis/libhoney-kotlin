@@ -3,7 +3,6 @@ package io.honeycomb
 import com.beust.klaxon.Klaxon
 import com.github.kittinunf.fuel.core.*
 import com.github.kittinunf.fuel.core.Method.*
-import com.github.kittinunf.fuel.httpGet
 import com.github.kittinunf.fuel.httpPost
 import com.github.kittinunf.result.Result
 import mu.KotlinLogging
@@ -156,7 +155,7 @@ object Transmit {
      * @return the [Result], contains a list of [Marker] instances or an exception if the call failed
      */
     fun allMarkers(honeyConfig: HoneyConfig): Result<List<Marker>, Exception> {
-        val (_, _, result) = markerRequest(honeyConfig).responseString()
+        val (_, _, result) = markerRequest(honeyConfig = honeyConfig, method = GET).responseString()
         return when (result) {
             is Result.Failure -> {
                 Result.error(result.error)
@@ -182,34 +181,27 @@ object Transmit {
     }
 
 
-    private fun markerRequest(honeyConfig: HoneyConfig): Request {
-        val honeyUri = "${honeyConfig.apiHost}$MARKERS_PATH${honeyConfig.dataSet}"
-        return honeyUri.httpGet()
-                .header(HEADER_HONEYCOMB_TEAM to honeyConfig.writeKey)
-                .body("")
-    }
-
-    private fun markerRequest(marker: Marker, method: Method, honeyConfig: HoneyConfig): Request {
-        val body: String
+    private fun markerRequest(marker: Marker? = null, method: Method, honeyConfig: HoneyConfig): Request {
         val honeyUri: String
         when (method) {
             POST -> {
                 honeyUri = "${honeyConfig.apiHost}$MARKERS_PATH${honeyConfig.dataSet}"
-                body = toJsonString(marker)
             }
             PUT -> {
-                honeyUri = "${honeyConfig.apiHost}$MARKERS_PATH${honeyConfig.dataSet}/${marker.id}"
-                body = toJsonString(marker)
+                honeyUri = "${honeyConfig.apiHost}$MARKERS_PATH${honeyConfig.dataSet}/${marker?.id}"
             }
             DELETE -> {
-                honeyUri = "${honeyConfig.apiHost}$MARKERS_PATH${honeyConfig.dataSet}/${marker.id}"
-                body = ""
+                honeyUri = "${honeyConfig.apiHost}$MARKERS_PATH${honeyConfig.dataSet}/${marker?.id}"
+            }
+            GET -> {
+                honeyUri = "${honeyConfig.apiHost}$MARKERS_PATH${honeyConfig.dataSet}"
             }
             else -> {
                 logger.warn { "Method $method not supported" }
                 throw IllegalArgumentException()
             }
         }
+        val body = marker?.let { toJsonString(it) } ?: ""
         return FuelManager.instance.request(method, honeyUri)
                 .header(HEADER_HONEYCOMB_TEAM to honeyConfig.writeKey)
                 .body(body)
