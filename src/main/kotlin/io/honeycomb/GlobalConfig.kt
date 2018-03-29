@@ -17,8 +17,8 @@ object GlobalConfig {
     }
 
     fun applyFields(event: Event): Event {
-        return dynamicFields.fold(event, { currentEvent, newEvent ->
-            val (field, value) = newEvent()
+        return dynamicFields.fold(event, { currentEvent: Event, dynamicField: () -> Pair<String, Any> ->
+            val (field, value) = dynamicField()
             currentEvent.add(field, value)
         }).add(fields)
     }

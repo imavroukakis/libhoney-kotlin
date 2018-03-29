@@ -3,7 +3,9 @@ package io.honeycomb
 import com.beust.klaxon.JsonArray
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
+import com.github.kittinunf.fuel.Fuel
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Fail
 import org.junit.Test
 import java.net.HttpURLConnection
 import java.time.LocalDateTime
@@ -30,7 +32,7 @@ class EventIntegrationTest {
 
     @Test
     fun checksTransmissionWithGlobalConfig() {
-        GlobalConfig.addField("hello","world")
+        GlobalConfig.addField("hello", "world")
         val now = LocalDateTime.now()
         val event = Event.newEvent(honeyConfig, now)
                 .add("string", "bar")
@@ -44,6 +46,27 @@ class EventIntegrationTest {
         assertThat(response.statusCode).isEqualTo(HttpURLConnection.HTTP_OK)
         //rather dirty check
         assertThat(request.cUrlString().contains("\\\"hello\\\":\\\"world\\\"")).isTrue()
+    }
+
+    @Test
+    fun checksAsyncTransmission() {
+        Fuel.testMode()
+        val now = LocalDateTime.now()
+        val event = Event.newEvent(honeyConfig, now)
+                .add("string", "bar")
+                .add("integer", 1)
+                .add("float", 1.1f)
+                .add("bool", true)
+                .add("date", now)
+                .add("array", listOf(1, 2, 3, 4))
+                .add("range", 1..4)
+        Transmit.send(event, { _, response, result ->
+            result.fold({ _ ->
+                assertThat(response.statusCode).isEqualTo(HttpURLConnection.HTTP_OK)
+            }, { err ->
+                Fail.fail(err.message)
+            })
+        })
     }
 
     @Test

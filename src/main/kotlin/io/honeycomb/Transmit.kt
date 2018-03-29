@@ -36,7 +36,10 @@ object Transmit {
      */
     fun blockingSend(event: Event): Triple<Request, Response, Result<String, FuelError>> {
         val eventsWithGlobalPairs = GlobalConfig.applyFields(event)
-        return eventRequest("${eventsWithGlobalPairs.apiHost}$EVENTS_PATH${eventsWithGlobalPairs.dataSet}", eventsWithGlobalPairs).responseString()
+        return eventRequest(
+                "${eventsWithGlobalPairs.apiHost}$EVENTS_PATH${eventsWithGlobalPairs.dataSet}",
+                eventsWithGlobalPairs
+        ).responseString()
     }
 
     /**
@@ -59,20 +62,22 @@ object Transmit {
     /**
      * Transmits an [Event] to the API. Optionally merges in [GlobalConfig] before transmission
      *
-     * This is an _async_ request
+     * This is an _async_ request. You can provide an optional handler, if you are interest in evaluating
+     * the response.
      *
      * @param event the [Event] to transmit
+     * @param handler an optional result handler
      */
-    fun send(event: Event) {
+    fun send(event: Event, handler: ((Request, Response, Result<String, FuelError>) -> Unit)? = null) {
         val evt = GlobalConfig.applyFields(event)
-        eventRequest("${evt.apiHost}$EVENTS_PATH${evt.dataSet}", evt)
-                .responseString { _, response, result ->
-                    result.fold({ _ ->
-                        logger.debug { response.statusCode }
-                    }, { err ->
-                        logger.warn { err }
-                    })
-                }
+        val safeHandler: (Request, Response, Result<String, FuelError>) -> Unit = handler ?: { _, response, result ->
+            result.fold({ _ ->
+                logger.debug { response.statusCode }
+            }, { err ->
+                logger.warn { err }
+            })
+        }
+        eventRequest("${evt.apiHost}$EVENTS_PATH${evt.dataSet}", evt).responseString(handler = safeHandler)
     }
 
     /**
