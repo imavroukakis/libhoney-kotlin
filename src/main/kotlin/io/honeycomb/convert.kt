@@ -9,27 +9,11 @@ internal val dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS
 
 fun TemporalAccessor.toRfc3339(): String = dateFormat.format(this)
 
-fun toJsonString(event: Event): String = toJson(event).toJsonString()
+fun List<Event>.toJsonString(): String = toJsonArray(this).toJsonString()
 
-fun toJsonString(marker: Marker): String = toJson(marker).toJsonString()
-
-fun toJsonString(events: List<Event>): String = toJson(events).toJsonString()
-
-private fun toJson(events: List<Event>): JsonArray<JsonObject> {
-    val jsonArray = JsonArray<JsonObject>()
-    for (event in events) {
-        val jsonObject = JsonObject()
-        jsonObject["time"] = event.timeStamp.toRfc3339()
-        jsonObject["samplerate"] = event.sampleRate
-        jsonObject["data"] = toJson(event)
-        jsonArray.add(jsonObject)
-    }
-    return jsonArray
-}
-
-fun toJson(marker: Marker): JsonObject {
+fun Marker.toJson(): JsonObject {
     val jsonObject = JsonObject()
-    with(marker) {
+    with(this) {
         startTime.takeIf { it != -1L }.apply { jsonObject["start_time"] = this }
         endTime.takeIf { it != -1L }.apply { jsonObject["end_time"] = this }
         message.apply { jsonObject["message"] = this }
@@ -39,4 +23,20 @@ fun toJson(marker: Marker): JsonObject {
     return jsonObject
 }
 
-fun toJson(event: Event): JsonObject = JsonObject(event.data)
+fun Marker.toJsonString(): String = toJson().toJsonString()
+
+fun Event.toJsonString(): String = toJson().toJsonString()
+
+fun Event.toJson(): JsonObject = JsonObject(this.data)
+
+private fun toJsonArray(events: List<Event>): JsonArray<JsonObject> {
+    val jsonArray = JsonArray<JsonObject>()
+    for (event in events) {
+        val jsonObject = JsonObject()
+        jsonObject["time"] = event.timeStamp.toRfc3339()
+        jsonObject["samplerate"] = event.sampleRate
+        jsonObject["data"] = event.toJson()
+        jsonArray.add(jsonObject)
+    }
+    return jsonArray
+}

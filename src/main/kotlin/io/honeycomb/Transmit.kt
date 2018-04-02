@@ -171,13 +171,13 @@ object Transmit {
                 .header(HEADER_HONEYCOMB_TEAM to event.writeKey,
                         HEADER_HONEYCOMB_EVENT_TIME to event.timeStamp.toRfc3339(),
                         HEADER_HONEYCOMB_SAMPLE_RATE to event.sampleRate)
-                .body(toJsonString(event))
+                .body(event.toJsonString())
     }
 
     private fun eventRequest(honeyUri: String, honeyConfig: HoneyConfig, events: List<Event>): Request {
         return honeyUri.httpPost()
                 .header(HEADER_HONEYCOMB_TEAM to honeyConfig.writeKey)
-                .body(toJsonString(events))
+                .body(events.toJsonString())
     }
 
 
@@ -201,7 +201,7 @@ object Transmit {
                 throw IllegalArgumentException()
             }
         }
-        val body = marker?.let { toJsonString(it) } ?: ""
+        val body = marker?.let { it.toJsonString() } ?: ""
         return FuelManager.instance.request(method, honeyUri)
                 .header(HEADER_HONEYCOMB_TEAM to honeyConfig.writeKey)
                 .body(body)

@@ -21,7 +21,7 @@ class EventTest {
         assertThat(event.timeStamp).isAfterOrEqualTo(now)
         assertThat(event.sampleRate).isEqualTo(1)
 
-        event = Event.newEvent(writeKey = writeKey,dataSet = dataSet,timeStamp = now)
+        event = Event.newEvent(writeKey = writeKey, dataSet = dataSet, timeStamp = now)
         assertThat(event.writeKey).isNotBlank().isEqualTo(writeKey)
         assertThat(event.dataSet).isNotBlank().isEqualTo(dataSet)
         assertThat(event.apiHost).isNotBlank().isEqualTo("https://api.honeycomb.io")
@@ -48,9 +48,9 @@ class EventTest {
                 .add("date", now)
                 .add("array", listOf(1, 2, 3, 4))
                 .add("range", 1..4)
-                .add("long_range",1L..4L)
-        assertThat(toJson(event)).isNotEmpty
-        assertThat(toJson(event)).satisfies { t ->
+                .add("long_range", 1L..4L)
+        assertThat(event.toJson()).isNotEmpty
+        assertThat(event.toJson()).satisfies { t ->
             assertThat(t["string"]).isEqualTo("bar")
             assertThat(t["integer"]).isEqualTo(1)
             assertThat(t["float"]).isEqualTo(1.1f)

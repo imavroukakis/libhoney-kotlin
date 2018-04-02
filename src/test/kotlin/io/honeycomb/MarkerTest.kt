@@ -9,10 +9,10 @@ class MarkerTest {
 
     @Test
     fun checkMarkerStructure() {
-        val json = toJson(Marker(LocalDateTime.now().toEpochSecond(ZoneOffset.UTC),
+        val json = Marker(LocalDateTime.now().toEpochSecond(ZoneOffset.UTC),
                 message = "marker created",
                 type = "test",
-                url = "http://foo"))
+                url = "http://foo").toJson()
         assertThat(json.long("start_time")).isNotNull()
         assertThat(json.long("end_time")).isNull()
         assertThat(json.string("message")).isEqualTo("marker created")
