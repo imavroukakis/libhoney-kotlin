@@ -55,7 +55,7 @@ class EventTest {
             assertThat(t["integer"]).isEqualTo(1)
             assertThat(t["float"]).isEqualTo(1.1f)
             assertThat(t["bool"]).isEqualTo(true)
-            assertThat(t["date"]).isEqualTo(toRfc3339(now))
+            assertThat(t["date"]).isEqualTo(now.toRfc3339())
             assertThat(t["array"]).isEqualTo(listOf(1, 2, 3, 4))
             assertThat(t["range"]).isEqualTo(listOf(1, 2, 3, 4))
             assertThat(t["long_range"]).isEqualTo(listOf(1L, 2L, 3L, 4L))

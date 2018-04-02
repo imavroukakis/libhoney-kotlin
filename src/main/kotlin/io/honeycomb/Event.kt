@@ -59,7 +59,7 @@ class Event private constructor(
     fun add(attribute: String, value: Any): Event {
         return when (value) {
             is TemporalAccessor ->
-                Event(this, attribute to toRfc3339(value))
+                Event(this, attribute to value.toRfc3339())
             is LongRange ->
                 Event(this, attribute to listOf(value).flatten())
             is IntRange ->

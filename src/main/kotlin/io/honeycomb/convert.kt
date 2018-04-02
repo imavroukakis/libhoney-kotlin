@@ -7,9 +7,7 @@ import java.time.temporal.TemporalAccessor
 
 internal val dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSS'Z'")
 
-fun toRfc3339(temporalAccessor: TemporalAccessor): String {
-    return dateFormat.format(temporalAccessor)
-}
+fun TemporalAccessor.toRfc3339(): String = dateFormat.format(this)
 
 fun toJsonString(event: Event): String = toJson(event).toJsonString()
 
@@ -21,7 +19,7 @@ private fun toJson(events: List<Event>): JsonArray<JsonObject> {
     val jsonArray = JsonArray<JsonObject>()
     for (event in events) {
         val jsonObject = JsonObject()
-        jsonObject["time"] = toRfc3339(event.timeStamp)
+        jsonObject["time"] = event.timeStamp.toRfc3339()
         jsonObject["samplerate"] = event.sampleRate
         jsonObject["data"] = toJson(event)
         jsonArray.add(jsonObject)

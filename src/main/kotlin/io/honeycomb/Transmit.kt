@@ -169,7 +169,7 @@ object Transmit {
     private fun eventRequest(honeyUri: String, event: Event): Request {
         return honeyUri.httpPost()
                 .header(HEADER_HONEYCOMB_TEAM to event.writeKey,
-                        HEADER_HONEYCOMB_EVENT_TIME to event.timeStamp,
+                        HEADER_HONEYCOMB_EVENT_TIME to event.timeStamp.toRfc3339(),
                         HEADER_HONEYCOMB_SAMPLE_RATE to event.sampleRate)
                 .body(toJsonString(event))
     }

@@ -31,6 +31,16 @@ class EventIntegrationTest {
     }
 
     @Test
+    fun checksTransmissionWithDynamicFields() {
+        for (i in 1..10) {
+            GlobalConfig.addField { Pair("heap_free", Runtime.getRuntime().freeMemory()) }
+            val event = Event.newEvent(honeyConfig, LocalDateTime.now())
+            val (_, response, _) = Transmit.blockingSend(event)
+            assertThat(response.statusCode).isEqualTo(HttpURLConnection.HTTP_OK)
+        }
+    }
+
+    @Test
     fun checksTransmissionWithGlobalConfig() {
         GlobalConfig.addField("hello", "world")
         val now = LocalDateTime.now()
