@@ -20,7 +20,7 @@ object Transmit {
     init {
         FuelManager.instance.baseHeaders = mapOf(
                 "Content-Type" to "application/json",
-                "User-Agent" to "libhoney-kt/0.0.5"
+                "User-Agent" to "libhoney-kt/0.0.6"
         )
     }
 
