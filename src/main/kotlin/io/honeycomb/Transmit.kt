@@ -6,24 +6,30 @@ import com.github.kittinunf.fuel.core.Method.*
 import com.github.kittinunf.fuel.httpPost
 import com.github.kittinunf.result.Result
 import mu.KotlinLogging
+import java.util.concurrent.Executors
+import java.util.concurrent.ThreadFactory
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
+
 
 object Transmit {
 
-    private val logger = KotlinLogging.logger {}
     private const val HEADER_HONEYCOMB_TEAM = "X-Honeycomb-Team"
     private const val HEADER_HONEYCOMB_EVENT_TIME = "X-Honeycomb-io.honeycomb.Event-Time"
     private const val HEADER_HONEYCOMB_SAMPLE_RATE = "X-Honeycomb-Samplerate"
     private const val EVENTS_PATH = "/1/events/"
     private const val BATCH_EVENTS_PATH = "/1/batch/"
     private const val MARKERS_PATH = "/1/markers/"
+    private val logger = KotlinLogging.logger {}
+    private val executorService = Executors.newFixedThreadPool(20, DaemonThreadFactory())
 
     init {
         FuelManager.instance.baseHeaders = mapOf(
                 "Content-Type" to "application/json",
-                "User-Agent" to "libhoney-kt/0.0.6"
+                "User-Agent" to "libhoney-kt/0.0.7"
         )
+        Runtime.getRuntime().addShutdownHook(Thread(Transmit::shutdown))
     }
-
 
     /**
      * Transmits an [Event] to the API. Optionally merges in [GlobalConfig] before transmission
@@ -76,7 +82,11 @@ object Transmit {
                 logger.warn { err }
             })
         }
-        eventRequest("${evt.apiHost}$EVENTS_PATH${evt.dataSet}", evt).responseString(handler = safeHandler)
+        executorService.submit({
+            val (request, response, result) = blockingSend(evt)
+            logger.debug { "invoking handler on ${Thread.currentThread().name}" }
+            safeHandler.invoke(request, response, result)
+        })
     }
 
     /**
@@ -166,6 +176,17 @@ object Transmit {
         }
     }
 
+    private fun shutdown() {
+        executorService.shutdown()
+        try {
+            if (!executorService.awaitTermination(2000, TimeUnit.MILLISECONDS)) {
+                executorService.shutdownNow()
+            }
+        } catch (e: InterruptedException) {
+            executorService.shutdownNow()
+        }
+    }
+
     private fun eventRequest(honeyUri: String, event: Event): Request {
         return honeyUri.httpPost()
                 .header(HEADER_HONEYCOMB_TEAM to event.writeKey,
@@ -205,5 +226,25 @@ object Transmit {
         return FuelManager.instance.request(method, honeyUri)
                 .header(HEADER_HONEYCOMB_TEAM to honeyConfig.writeKey)
                 .body(body)
+    }
+
+    internal class DaemonThreadFactory : ThreadFactory {
+        private val poolNumber = AtomicInteger(1)
+        private val group: ThreadGroup
+        private val threadNumber = AtomicInteger(1)
+        private val namePrefix: String
+
+        init {
+            val s = System.getSecurityManager()
+            group = s?.threadGroup ?: Thread.currentThread().threadGroup
+            namePrefix = "transmit-${poolNumber.getAndIncrement()}-thread-"
+        }
+
+        override fun newThread(r: Runnable): Thread {
+            val t = Thread(group, r, "$namePrefix${threadNumber.getAndIncrement()}", 0)
+            t.isDaemon = true
+            t.priority = Thread.NORM_PRIORITY
+            return t
+        }
     }
 }

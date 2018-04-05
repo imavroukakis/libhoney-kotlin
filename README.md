@@ -1,7 +1,7 @@
 # libhoney for Kotlin
 
 [![CircleCI](https://circleci.com/gh/imavroukakis/libhoney-kotlin.svg?style=shield)](https://circleci.com/gh/imavroukakis/libhoney-kotlin)
-[ ![Download](https://api.bintray.com/packages/imavroukakis/maven/libhoney-kotlin/images/download.svg?version=0.0.6) ](https://bintray.com/imavroukakis/maven/libhoney-kotlin/0.0.6/link)[![codecov](https://codecov.io/gh/imavroukakis/libhoney-kotlin/branch/master/graph/badge.svg)](https://codecov.io/gh/imavroukakis/libhoney-kotlin)
+[ ![Download](https://api.bintray.com/packages/imavroukakis/maven/libhoney-kotlin/images/download.svg?version=0.0.7) ](https://bintray.com/imavroukakis/maven/libhoney-kotlin/0.0.7/link)[![codecov](https://codecov.io/gh/imavroukakis/libhoney-kotlin/branch/master/graph/badge.svg)](https://codecov.io/gh/imavroukakis/libhoney-kotlin)
 
 Kotlin library for sending events to [Honeycomb](https://honeycomb.io).
 
@@ -22,7 +22,7 @@ compile 'io.honeycomb:libhoney-kotlin:<latest version>'
 
 Honeycomb can calculate all sorts of statistics, so send the values you care about and let us crunch the averages, percentiles, lower/upper bounds, cardinality -- whatever you want -- for you.
 
-## Events
+## Creating Events
 
 ### Using `HoneyConfig`
 
@@ -53,7 +53,11 @@ val event =
 ```
 
 
-### Send event and block for result
+## Sending Events
+
+Sending an `Event` is done via the `Transmit` object.
+
+### Send event and wait for response
 
 ```
 val event =
@@ -83,6 +87,28 @@ val event =
       .add("range", 1..4)
 
 Transmit.send(event)
+```
+
+### Send event async and process response
+
+```
+val event =
+    Event.newEvent(HoneyConfig(writeKey = "YOUR_KEY", dataSet = "test_data"), LocalDateTime.now())
+      .add("string", "bar")
+      .add("integer", 1)
+      .add("float", 1.1f)
+      .add("bool", true)
+      .add("date", now)
+      .add("array", listOf(1, 2, 3, 4))
+      .add("range", 1..4)
+
+Transmit.send(event, { _, response, result ->
+    result.fold({ _ ->
+        println("$i -> ${response.statusCode}")
+    }, { err ->
+        println("$i -> Failure ${err.message}")
+    })
+})
 ```
 
 ### Batch send events
