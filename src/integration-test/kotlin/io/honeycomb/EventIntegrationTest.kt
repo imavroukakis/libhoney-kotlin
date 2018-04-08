@@ -4,6 +4,8 @@ import com.beust.klaxon.JsonArray
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
 import com.github.kittinunf.fuel.Fuel
+import io.honeycomb.net.blockingSend
+import io.honeycomb.net.send
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Fail
 import org.junit.Test
@@ -18,7 +20,7 @@ class EventIntegrationTest {
     @Test
     fun checksTransmission() {
         val now = LocalDateTime.now()
-        val event = Event.newEvent(honeyConfig, now)
+        val (_, response, _) = Event.newEvent(honeyConfig, now)
                 .add("string", "bar")
                 .add("integer", 1)
                 .add("float", 1.1f)
@@ -26,7 +28,7 @@ class EventIntegrationTest {
                 .add("date", now)
                 .add("array", listOf(1, 2, 3, 4))
                 .add("range", 1..4)
-        val (_, response, _) = Transmit.blockingSend(event)
+                .blockingSend()
         assertThat(response.statusCode).isEqualTo(HttpURLConnection.HTTP_OK)
     }
 
@@ -35,7 +37,7 @@ class EventIntegrationTest {
         for (i in 1..10) {
             GlobalConfig.addField { Pair("heap_free", Runtime.getRuntime().freeMemory()) }
             val event = Event.newEvent(honeyConfig, LocalDateTime.now())
-            val (_, response, _) = Transmit.blockingSend(event)
+            val (_, response, _) = event.blockingSend()
             assertThat(response.statusCode).isEqualTo(HttpURLConnection.HTTP_OK)
         }
     }
@@ -44,7 +46,7 @@ class EventIntegrationTest {
     fun checksTransmissionWithGlobalConfig() {
         GlobalConfig.addField("hello", "world")
         val now = LocalDateTime.now()
-        val event = Event.newEvent(honeyConfig, now)
+        val (request, response, _) = Event.newEvent(honeyConfig, now)
                 .add("string", "bar")
                 .add("integer", 1)
                 .add("float", 1.1f)
@@ -52,7 +54,7 @@ class EventIntegrationTest {
                 .add("date", now)
                 .add("array", listOf(1, 2, 3, 4))
                 .add("range", 1..4)
-        val (request, response, _) = Transmit.blockingSend(event)
+                .blockingSend()
         assertThat(response.statusCode).isEqualTo(HttpURLConnection.HTTP_OK)
         //rather dirty check
         assertThat(request.cUrlString().contains("\\\"hello\\\":\\\"world\\\"")).isTrue()
@@ -62,7 +64,7 @@ class EventIntegrationTest {
     fun checksAsyncTransmission() {
         Fuel.testMode()
         val now = LocalDateTime.now()
-        val event = Event.newEvent(honeyConfig, now)
+        Event.newEvent(honeyConfig, now)
                 .add("string", "bar")
                 .add("integer", 1)
                 .add("float", 1.1f)
@@ -70,13 +72,13 @@ class EventIntegrationTest {
                 .add("date", now)
                 .add("array", listOf(1, 2, 3, 4))
                 .add("range", 1..4)
-        Transmit.send(event, { _, response, result ->
-            result.fold({ _ ->
-                assertThat(response.statusCode).isEqualTo(HttpURLConnection.HTTP_OK)
-            }, { err ->
-                Fail.fail(err.message)
-            })
-        })
+                .send({ _, response, result ->
+                    result.fold({ _ ->
+                        assertThat(response.statusCode).isEqualTo(HttpURLConnection.HTTP_OK)
+                    }, { err ->
+                        Fail.fail(err.message)
+                    })
+                })
     }
 
     @Test
@@ -97,7 +99,7 @@ class EventIntegrationTest {
                 .add("date", LocalDateTime.now())
                 .add("array", listOf(1, 2, 3, 4))
                 .add("range", 1..4)
-        val (_, response, result) = Transmit.blockingSend(listOf(event1, event2), honeyConfig)
+        val (_, response, result) = listOf(event1, event2).blockingSend(honeyConfig)
         assertThat(response.statusCode).isEqualTo(HttpURLConnection.HTTP_OK)
         val parser = Parser()
         val stringBuilder = StringBuilder(result.get())
@@ -113,8 +115,7 @@ class EventIntegrationTest {
     fun checksFailedTransmissionDueToInvalidWriteKey() {
         val now = LocalDateTime.now()
         val honeyConfig = HoneyConfig(writeKey = "garbage", dataSet = "kotlintest")
-        val event = Event.newEvent(honeyConfig, now).add("string", "bar")
-        val (_, response, _) = Transmit.blockingSend(event)
+        val (_, response, _) = Event.newEvent(honeyConfig, now).add("string", "bar").blockingSend()
         assertThat(response.statusCode).isEqualTo(HttpURLConnection.HTTP_UNAUTHORIZED)
     }
 }

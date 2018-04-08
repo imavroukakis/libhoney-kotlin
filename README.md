@@ -1,7 +1,7 @@
 # libhoney for Kotlin
 
 [![CircleCI](https://circleci.com/gh/imavroukakis/libhoney-kotlin.svg?style=shield)](https://circleci.com/gh/imavroukakis/libhoney-kotlin)
-[ ![Download](https://api.bintray.com/packages/imavroukakis/maven/libhoney-kotlin/images/download.svg?version=0.0.7) ](https://bintray.com/imavroukakis/maven/libhoney-kotlin/0.0.7/link)[![codecov](https://codecov.io/gh/imavroukakis/libhoney-kotlin/branch/master/graph/badge.svg)](https://codecov.io/gh/imavroukakis/libhoney-kotlin)
+[ ![Download](https://api.bintray.com/packages/imavroukakis/maven/libhoney-kotlin/images/download.svg?version=0.1.0) ](https://bintray.com/imavroukakis/maven/libhoney-kotlin/0.1.0/link)[![codecov](https://codecov.io/gh/imavroukakis/libhoney-kotlin/branch/master/graph/badge.svg)](https://codecov.io/gh/imavroukakis/libhoney-kotlin)
 
 Kotlin library for sending events to [Honeycomb](https://honeycomb.io).
 
@@ -27,35 +27,31 @@ Honeycomb can calculate all sorts of statistics, so send the values you care abo
 ### Using `HoneyConfig`
 
 ```
-val event =
-    Event.newEvent(HoneyConfig(writeKey = "YOUR_KEY", dataSet = "test_data"), LocalDateTime.now())
-      .add("string", "bar")
-      .add("integer", 1)
-      .add("float", 1.1f)
-      .add("bool", true)
-      .add("date", now)
-      .add("array", listOf(1, 2, 3, 4))
-      .add("range", 1..4)
+Event.newEvent(HoneyConfig(writeKey = "YOUR_KEY", dataSet = "test_data"), LocalDateTime.now())
+     .add("string", "bar")
+     .add("integer", 1)
+     .add("float", 1.1f)
+     .add("bool", true)
+     .add("date", now)
+     .add("array", listOf(1, 2, 3, 4))
+     .add("range", 1..4)
 ```
 
 ### Standalone
 
 ```
-val event =
-    Event.newEvent(writeKey = "write_key",dataSet = "your_data_set",timeStamp = LocalDateTime.now())
-      .add("string", "bar")
-      .add("integer", 1)
-      .add("float", 1.1f)
-      .add("bool", true)
-      .add("date", now)
-      .add("array", listOf(1, 2, 3, 4))
-      .add("range", 1..4)
+Event.newEvent(writeKey = "write_key",dataSet = "your_data_set",timeStamp = LocalDateTime.now())
+     .add("string", "bar")
+     .add("integer", 1)
+     .add("float", 1.1f)
+     .add("bool", true)
+     .add("date", now)
+     .add("array", listOf(1, 2, 3, 4))
+     .add("range", 1..4)
 ```
 
 
 ## Sending Events
-
-Sending an `Event` is done via the `Transmit` object.
 
 ### Send event and wait for response
 
@@ -70,23 +66,21 @@ val event =
       .add("array", listOf(1, 2, 3, 4))
       .add("range", 1..4)
 
-val (_, response, _) = Transmit.sendBlocking(event)
+val (_, response, _) = event.sendBlocking()
 ```
 
 ### Send event async
 
 ```
-val event =
-    Event.newEvent(HoneyConfig(writeKey = "YOUR_KEY", dataSet = "test_data"), LocalDateTime.now())
-      .add("string", "bar")
-      .add("integer", 1)
-      .add("float", 1.1f)
-      .add("bool", true)
-      .add("date", now)
-      .add("array", listOf(1, 2, 3, 4))
-      .add("range", 1..4)
-
-Transmit.send(event)
+Event.newEvent(HoneyConfig(writeKey = "YOUR_KEY", dataSet = "test_data"), LocalDateTime.now())
+     .add("string", "bar")
+     .add("integer", 1)
+     .add("float", 1.1f)
+     .add("bool", true)
+     .add("date", now)
+     .add("array", listOf(1, 2, 3, 4))
+     .add("range", 1..4)
+     .send()
 ```
 
 ### Send event async and process response
@@ -102,7 +96,7 @@ val event =
       .add("array", listOf(1, 2, 3, 4))
       .add("range", 1..4)
 
-Transmit.send(event, { _, response, result ->
+event.send({ _, response, result ->
     result.fold({ _ ->
         println("$i -> ${response.statusCode}")
     }, { err ->
@@ -130,7 +124,7 @@ val event2 = Event.newEvent(honeyConfig, LocalDateTime.now())
                 .add("date", LocalDateTime.now())
                 .add("array", listOf(1, 2, 3, 4))
                 .add("range", 1..4)
-val (_, response, result) = Transmit.blockingSend(listOf(event1, event2), honeyConfig)
+val (_, response, result) = listOf(event1, event2).blockingSend(honeyConfig)
 assertThat(response.statusCode).isEqualTo(HttpURLConnection.HTTP_OK)
 ```
 
@@ -144,7 +138,7 @@ val marker = Marker(LocalDateTime.now().minusHours(1).toEpochSecond(ZoneOffset.U
         message = "marker created",
         type = "integration test",
         url = "http://foo")
-val result = Transmit.createMarker(marker, honeyConfig)
+val result = marker.create(honeyConfig)
 ```
 
 ### Update marker
@@ -153,20 +147,22 @@ Using `result` from the _Create Marker_ example
 ```
 val modifiedStartTime = LocalDateTime.now().minusHours(5).toEpochSecond(ZoneOffset.UTC)
 val modifiedMarkerResult = Transmit.updateMarker(
-        result.get().copy(startTime = modifiedStartTime, message = "marker updated"), honeyConfig)
+        result.get()
+        .copy(startTime = modifiedStartTime, message = "marker updated")
+        .update(honeyConfig)
 ```
 
 ### Delete marker
 
 Using `modifiedMarkerResult` from the _Update Marker_ example
 ```
-val removedMarkerResult = Transmit.removeMarker(modifiedMarkerResult.get(), honeyConfig)
+val removedMarkerResult = modifiedMarkerResult.get().remove(honeyConfig)
 ```
 
 ### Get all markers
 
 ```
-val allMarkers : List<Marker> = Transmit.allMarkers(honeyConfig).get()
+val allMarkers : List<Marker> = allMarkers(honeyConfig).get()
 ```
 
 ## Global fields
