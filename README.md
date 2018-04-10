@@ -1,7 +1,7 @@
 # libhoney for Kotlin
 
 [![CircleCI](https://circleci.com/gh/imavroukakis/libhoney-kotlin.svg?style=shield)](https://circleci.com/gh/imavroukakis/libhoney-kotlin)
-[ ![Download](https://api.bintray.com/packages/imavroukakis/maven/libhoney-kotlin/images/download.svg?version=0.1.0) ](https://bintray.com/imavroukakis/maven/libhoney-kotlin/0.1.0/link)[![codecov](https://codecov.io/gh/imavroukakis/libhoney-kotlin/branch/master/graph/badge.svg)](https://codecov.io/gh/imavroukakis/libhoney-kotlin)
+[![Download](https://api.bintray.com/packages/imavroukakis/maven/libhoney-kotlin/images/download.svg?version=0.1.1) ](https://bintray.com/imavroukakis/maven/libhoney-kotlin/0.1.1/link)[![codecov](https://codecov.io/gh/imavroukakis/libhoney-kotlin/branch/master/graph/badge.svg)](https://codecov.io/gh/imavroukakis/libhoney-kotlin)
 
 Kotlin library for sending events to [Honeycomb](https://honeycomb.io).
 
@@ -183,6 +183,22 @@ GlobalConfig.addField { Pair("heap_free", Runtime.getRuntime().freeMemory()) }
 GlobalConfig.addField { Pair("time", LocalDateTime.now()) }
 ```
 
+## Tuning
+
+If you want to tweak the defaults you must set these **before you send your first Event**.
+
+The following aspects of the library can be tuned
+
+Parameter | Default Value
+------------ | -------------
+`Tuning.threadCount` | 20
+`Tuning.maxQueueSize` | 1000
+`Tuning.retryPolicy` | `Tuning.RetryPolicy.RETRY`
+
+Through empirical testing:
+- values between 20 and 30 work best for `threadCount`
+- `Tuning.RetryPolicy.RETRY` is best if you want to ensure your events are delivered. Alternatively, if you don't mind trading consistency for speed, set `Tuning.retryPolicy` to `Tuning.RetryPolicy.DROP`
+
 ## Contributions
 
 Features, bug fixes and other changes to libhoney-kotlin are gladly accepted. Please
@@ -190,3 +206,10 @@ open issues or a pull request with your change. Remember to add your name to the
 CONTRIBUTORS file!
 
 All contributions will be released under the Apache License 2.0.
+
+## Credits
+
+This project is made possible with the kind contribution of licenses from
+
+- [JetBrains for IntelliJ IDE](https://www.jetbrains.com/)
+- [EJ Technologies for Java Profiler](https://www.ej-technologies.com/products/jprofiler/overview.html)

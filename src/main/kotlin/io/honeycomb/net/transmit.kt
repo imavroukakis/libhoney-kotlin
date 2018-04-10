@@ -6,13 +6,11 @@ import com.github.kittinunf.fuel.httpPost
 import com.github.kittinunf.result.Result
 import io.honeycomb.*
 import mu.KotlinLogging
-import java.util.concurrent.Executors
-import java.util.concurrent.ThreadFactory
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * Transmits an [Event] to the API. Optionally merges in [GlobalConfig] before transmission
+ * Transmits an [Event] to the API. Merges in any fields found in [GlobalConfig] before transmission
  *
  * This is a _blocking_ request and you will need to handle the result
  *
@@ -28,7 +26,7 @@ fun Event.blockingSend(): Triple<Request, Response, Result<String, FuelError>> {
 }
 
 /**
- * Batch transmits events to the API. Optionally merges in [GlobalConfig] before transmission
+ * Batch transmits events to the API. Merges in any fields found in [GlobalConfig] before transmission
  *
  * This is a _blocking_ request and you will need to handle the result
  *
@@ -45,7 +43,7 @@ fun List<Event>.blockingSend(honeyConfig: HoneyConfig): Triple<Request, Response
 }
 
 /**
- * Transmits an [Event] to the API. Optionally merges in [GlobalConfig] before transmission
+ * Transmits an [Event] to the API. Merges in any fields found in [GlobalConfig] before transmission
  *
  * This is an _async_ request. You can provide an optional handler, if you are interest in evaluating
  * the response.
@@ -160,27 +158,30 @@ internal object Transmit {
     private const val MARKERS_PATH = "/1/markers/"
     internal const val EVENTS_PATH = "/1/events/"
     internal const val BATCH_EVENTS_PATH = "/1/batch/"
-    private val executorService = Executors.newFixedThreadPool(20, DaemonThreadFactory())
+    private val executorService by lazy {
+        val policy: RejectedExecutionHandler = if (Tuning.retryPolicy == Tuning.RetryPolicy.RETRY) {
+            LoggingCallerRunsPolicy()
+        } else {
+            LoggingDiscardPolicy()
+        }
+        val threadPoolExecutor = ThreadPoolExecutor(
+                Tuning.threadCount,
+                Tuning.threadCount,
+                30, TimeUnit.SECONDS,
+                LinkedBlockingDeque<Runnable>(Tuning.maxQueueSize),
+                DaemonThreadFactory(),
+                policy)
+        threadPoolExecutor.prestartCoreThread()
+        threadPoolExecutor
+    }
     internal val logger = KotlinLogging.logger {}
 
     init {
         FuelManager.instance.baseHeaders = mapOf(
                 "Content-Type" to "application/json",
-                "User-Agent" to "libhoney-kt/0.1.0"
+                "User-Agent" to "libhoney-kt/0.1.1"
         )
         Runtime.getRuntime().addShutdownHook(Thread(Transmit::shutdown))
-    }
-
-
-    private fun shutdown() {
-        executorService.shutdown()
-        try {
-            if (!executorService.awaitTermination(2000, TimeUnit.MILLISECONDS)) {
-                executorService.shutdownNow()
-            }
-        } catch (e: InterruptedException) {
-            executorService.shutdownNow()
-        }
     }
 
     internal fun eventRequest(honeyUri: String, event: Event): Request {
@@ -232,7 +233,38 @@ internal object Transmit {
         })
     }
 
-    internal class DaemonThreadFactory : ThreadFactory {
+    private fun shutdown() {
+        executorService.shutdown()
+        try {
+            if (!executorService.awaitTermination(2000, TimeUnit.MILLISECONDS)) {
+                executorService.shutdownNow()
+            }
+        } catch (e: InterruptedException) {
+            executorService.shutdownNow()
+        }
+    }
+
+    private class LoggingCallerRunsPolicy(
+            val innerPolicy: RejectedExecutionHandler = ThreadPoolExecutor.CallerRunsPolicy()
+    ) : RejectedExecutionHandler by innerPolicy {
+
+        override fun rejectedExecution(r: Runnable, executor: ThreadPoolExecutor) {
+            innerPolicy.rejectedExecution(r, executor)
+            logger.debug { "rejected execution $r|queued:${executor.queue.size}|active:${executor.activeCount}" }
+        }
+    }
+
+    private class LoggingDiscardPolicy(
+            val innerPolicy: RejectedExecutionHandler = ThreadPoolExecutor.DiscardPolicy()
+    ) : RejectedExecutionHandler by innerPolicy {
+
+        override fun rejectedExecution(r: Runnable, executor: ThreadPoolExecutor) {
+            innerPolicy.rejectedExecution(r, executor)
+            logger.debug { "rejected execution $r|queued:${executor.queue.size}|active:${executor.activeCount}" }
+        }
+    }
+
+    private class DaemonThreadFactory : ThreadFactory {
         private val poolNumber = AtomicInteger(1)
         private val group: ThreadGroup
         private val threadNumber = AtomicInteger(1)
