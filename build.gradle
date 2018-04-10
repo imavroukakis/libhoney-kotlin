@@ -119,9 +119,9 @@ task jacocoMerge(type: JacocoMerge) {
     executionData test, integrationTest
 }
 
-task mergedReport(type: JacocoReport) {
+task coverageReport(type: JacocoReport) {
     executionData jacocoMerge.destinationFile
-    dependsOn jacocoMerge
+    dependsOn jacocoTestReport, jacocoMerge
     reports {
         html.enabled = true
         xml.enabled = true

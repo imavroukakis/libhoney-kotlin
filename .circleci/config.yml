@@ -36,8 +36,7 @@ jobs:
       # run all tests
       - run: gradle check
       # coverage report
-      - run: gradle jacocoTestReport
-      - run: gradle mergedReport
+      - run: gradle coverageReport
       - run:
-          name: Coverage report
+          name: Upload coverage report
           command: 'bash <(curl -s https://codecov.io/bash)'
