@@ -1,27 +1,40 @@
 package io.honeycomb.net
 
 import com.beust.klaxon.Klaxon
-import com.github.kittinunf.fuel.core.*
+import com.github.kittinunf.fuel.core.FuelError
+import com.github.kittinunf.fuel.core.FuelManager
+import com.github.kittinunf.fuel.core.Method
+import com.github.kittinunf.fuel.core.Request
+import com.github.kittinunf.fuel.core.Response
 import com.github.kittinunf.fuel.httpPost
 import com.github.kittinunf.result.Result
-import io.honeycomb.*
+import io.honeycomb.Event
+import io.honeycomb.GlobalConfig
+import io.honeycomb.HoneyConfig
+import io.honeycomb.Marker
+import io.honeycomb.Tuning
+import io.honeycomb.toJsonString
+import io.honeycomb.toRfc3339
 import mu.KotlinLogging
-import java.util.concurrent.*
+import java.util.concurrent.LinkedBlockingDeque
+import java.util.concurrent.RejectedExecutionHandler
+import java.util.concurrent.ThreadFactory
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * Transmits an [Event] to the API. Merges in any fields found in [GlobalConfig] before transmission
+ * Transmits the [Event] to the API. Merges in any fields found in [GlobalConfig] before transmission
  *
  * This is a _blocking_ request and you will need to handle the result
  *
- * @param event the [Event] to transmit
  * @return the response [Triple]
  */
 fun Event.blockingSend(): Triple<Request, Response, Result<String, FuelError>> {
     val eventsWithGlobalPairs = GlobalConfig.applyFields(this)
     return Transmit.eventRequest(
-            "${eventsWithGlobalPairs.apiHost}${Transmit.EVENTS_PATH}${eventsWithGlobalPairs.dataSet}",
-            eventsWithGlobalPairs
+        "${eventsWithGlobalPairs.apiHost}${Transmit.EVENTS_PATH}${eventsWithGlobalPairs.dataSet}",
+        eventsWithGlobalPairs
     ).responseString()
 }
 
@@ -30,25 +43,23 @@ fun Event.blockingSend(): Triple<Request, Response, Result<String, FuelError>> {
  *
  * This is a _blocking_ request and you will need to handle the result
  *
- * @param events the [List] of [Event] to transmit
  * @return the response [Triple]
  */
 fun List<Event>.blockingSend(honeyConfig: HoneyConfig): Triple<Request, Response, Result<String, FuelError>> {
     val eventsWithGlobalPairs = this.map { GlobalConfig.applyFields(it) }
     return Transmit.eventRequest(
-            "${honeyConfig.apiHost}${Transmit.BATCH_EVENTS_PATH}${honeyConfig.dataSet}",
-            honeyConfig,
-            eventsWithGlobalPairs
+        "${honeyConfig.apiHost}${Transmit.BATCH_EVENTS_PATH}${honeyConfig.dataSet}",
+        honeyConfig,
+        eventsWithGlobalPairs
     ).responseString()
 }
 
 /**
- * Transmits an [Event] to the API. Merges in any fields found in [GlobalConfig] before transmission
+ * Transmits the [Event] to the API. Merges in any fields found in [GlobalConfig] before transmission
  *
  * This is an _async_ request. You can provide an optional handler, if you are interest in evaluating
  * the response.
  *
- * @param event the [Event] to transmit
  * @param handler an optional result handler
  */
 fun Event.send(handler: ((Request, Response, Result<String, FuelError>) -> Unit)? = null) {
@@ -68,7 +79,6 @@ fun Event.send(handler: ((Request, Response, Result<String, FuelError>) -> Unit)
  *
  * This is a _blocking_ request and you will need to handle the result
  *
- * @param marker the [Marker] to transmit
  * @return the [Result], contains a new [Marker] instance additionally populated with the marker id or an exception
  * if the call failed
  */
@@ -84,13 +94,10 @@ fun Marker.create(honeyConfig: HoneyConfig): Result<Marker, Exception> {
     }
 }
 
-
 /**
- * Updates an existing [Marker]
+ * Updates the [Marker]
  *
  * This is a _blocking_ request and you will need to handle the result
- *
- * @param marker the modified [Marker]
  *
  * @return the [Result], contains a new [Marker] instance with the update marker data or an exception
  * if the call failed
@@ -108,11 +115,9 @@ fun Marker.update(honeyConfig: HoneyConfig): Result<Marker, Exception> {
 }
 
 /**
- * Deletes an existing [Marker]
+ * Deletes the [Marker]
  *
  * This is a _blocking_ request and you will need to handle the result
- *
- * @param marker the [Marker] to delete
  *
  * @return the [Result], contains the deleted [Marker] instance or an exception if the call failed
  */
@@ -127,7 +132,6 @@ fun Marker.remove(honeyConfig: HoneyConfig): Result<Marker, Exception> {
         }
     }
 }
-
 
 /**
  * Lists all existing [Marker]
@@ -165,12 +169,12 @@ internal object Transmit {
             LoggingDiscardPolicy()
         }
         val threadPoolExecutor = ThreadPoolExecutor(
-                Tuning.threadCount,
-                Tuning.threadCount,
-                30, TimeUnit.SECONDS,
-                LinkedBlockingDeque<Runnable>(Tuning.maxQueueSize),
-                DaemonThreadFactory(),
-                policy)
+            Tuning.threadCount,
+            Tuning.threadCount,
+            30, TimeUnit.SECONDS,
+            LinkedBlockingDeque<Runnable>(Tuning.maxQueueSize),
+            DaemonThreadFactory(),
+            policy)
         threadPoolExecutor.prestartCoreThread()
         threadPoolExecutor
     }
@@ -178,26 +182,25 @@ internal object Transmit {
 
     init {
         FuelManager.instance.baseHeaders = mapOf(
-                "Content-Type" to "application/json",
-                "User-Agent" to "libhoney-kt/0.1.1"
+            "Content-Type" to "application/json",
+            "User-Agent" to "libhoney-kt/0.1.1"
         )
         Runtime.getRuntime().addShutdownHook(Thread(Transmit::shutdown))
     }
 
     internal fun eventRequest(honeyUri: String, event: Event): Request {
         return honeyUri.httpPost()
-                .header(HEADER_HONEYCOMB_TEAM to event.writeKey,
-                        HEADER_HONEYCOMB_EVENT_TIME to event.timeStamp.toRfc3339(),
-                        HEADER_HONEYCOMB_SAMPLE_RATE to event.sampleRate)
-                .body(event.toJsonString())
+            .header(HEADER_HONEYCOMB_TEAM to event.writeKey,
+                HEADER_HONEYCOMB_EVENT_TIME to event.timeStamp.toRfc3339(),
+                HEADER_HONEYCOMB_SAMPLE_RATE to event.sampleRate)
+            .body(event.toJsonString())
     }
 
     internal fun eventRequest(honeyUri: String, honeyConfig: HoneyConfig, events: List<Event>): Request {
         return honeyUri.httpPost()
-                .header(HEADER_HONEYCOMB_TEAM to honeyConfig.writeKey)
-                .body(events.toJsonString())
+            .header(HEADER_HONEYCOMB_TEAM to honeyConfig.writeKey)
+            .body(events.toJsonString())
     }
-
 
     internal fun markerRequest(marker: Marker? = null, method: Method, honeyConfig: HoneyConfig): Request {
         val honeyUri: String
@@ -221,8 +224,8 @@ internal object Transmit {
         }
         val body = marker?.toJsonString() ?: ""
         return FuelManager.instance.request(method, honeyUri)
-                .header(HEADER_HONEYCOMB_TEAM to honeyConfig.writeKey)
-                .body(body)
+            .header(HEADER_HONEYCOMB_TEAM to honeyConfig.writeKey)
+            .body(body)
     }
 
     internal fun submit(event: Event, safeHandler: (Request, Response, Result<String, FuelError>) -> Unit) {
@@ -245,7 +248,7 @@ internal object Transmit {
     }
 
     private class LoggingCallerRunsPolicy(
-            val innerPolicy: RejectedExecutionHandler = ThreadPoolExecutor.CallerRunsPolicy()
+        val innerPolicy: RejectedExecutionHandler = ThreadPoolExecutor.CallerRunsPolicy()
     ) : RejectedExecutionHandler by innerPolicy {
 
         override fun rejectedExecution(r: Runnable, executor: ThreadPoolExecutor) {
@@ -255,7 +258,7 @@ internal object Transmit {
     }
 
     private class LoggingDiscardPolicy(
-            val innerPolicy: RejectedExecutionHandler = ThreadPoolExecutor.DiscardPolicy()
+        val innerPolicy: RejectedExecutionHandler = ThreadPoolExecutor.DiscardPolicy()
     ) : RejectedExecutionHandler by innerPolicy {
 
         override fun rejectedExecution(r: Runnable, executor: ThreadPoolExecutor) {
