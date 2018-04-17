@@ -23,6 +23,9 @@ import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
+private const val EVENTS_PATH = "/1/events/"
+private const val BATCH_EVENTS_PATH = "/1/batch/"
+
 /**
  * Transmits the [Event] to the API. Merges in any fields found in [GlobalConfig] before transmission
  *
@@ -33,7 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger
 fun Event.blockingSend(): Triple<Request, Response, Result<String, FuelError>> {
     val eventsWithGlobalPairs = GlobalConfig.applyFields(this)
     return Transmit.eventRequest(
-        "${eventsWithGlobalPairs.apiHost}${Transmit.EVENTS_PATH}${eventsWithGlobalPairs.dataSet}",
+        "${eventsWithGlobalPairs.apiHost}$EVENTS_PATH${eventsWithGlobalPairs.dataSet}",
         eventsWithGlobalPairs
     ).responseString()
 }
@@ -48,7 +51,7 @@ fun Event.blockingSend(): Triple<Request, Response, Result<String, FuelError>> {
 fun List<Event>.blockingSend(honeyConfig: HoneyConfig): Triple<Request, Response, Result<String, FuelError>> {
     val eventsWithGlobalPairs = this.map { GlobalConfig.applyFields(it) }
     return Transmit.eventRequest(
-        "${honeyConfig.apiHost}${Transmit.BATCH_EVENTS_PATH}${honeyConfig.dataSet}",
+        "${honeyConfig.apiHost}$BATCH_EVENTS_PATH${honeyConfig.dataSet}",
         honeyConfig,
         eventsWithGlobalPairs
     ).responseString()
@@ -154,14 +157,12 @@ fun allMarkers(honeyConfig: HoneyConfig): Result<List<Marker>, Exception> {
     }
 }
 
-internal object Transmit {
+private object Transmit {
 
     private const val HEADER_HONEYCOMB_TEAM = "X-Honeycomb-Team"
     private const val HEADER_HONEYCOMB_EVENT_TIME = "X-Honeycomb-io.honeycomb.Event-Time"
     private const val HEADER_HONEYCOMB_SAMPLE_RATE = "X-Honeycomb-Samplerate"
     private const val MARKERS_PATH = "/1/markers/"
-    internal const val EVENTS_PATH = "/1/events/"
-    internal const val BATCH_EVENTS_PATH = "/1/batch/"
     private val executorService by lazy {
         val policy: RejectedExecutionHandler = if (Tuning.retryPolicy == Tuning.RetryPolicy.RETRY) {
             LoggingCallerRunsPolicy()
@@ -169,7 +170,7 @@ internal object Transmit {
             LoggingDiscardPolicy()
         }
         val threadPoolExecutor = ThreadPoolExecutor(
-            Tuning.threadCount,
+            1,
             Tuning.threadCount,
             30, TimeUnit.SECONDS,
             LinkedBlockingDeque<Runnable>(Tuning.maxQueueSize),
@@ -178,7 +179,7 @@ internal object Transmit {
         threadPoolExecutor.prestartCoreThread()
         threadPoolExecutor
     }
-    internal val logger = KotlinLogging.logger {}
+    val logger = KotlinLogging.logger {}
 
     init {
         FuelManager.instance.baseHeaders = mapOf(
@@ -188,7 +189,7 @@ internal object Transmit {
         Runtime.getRuntime().addShutdownHook(Thread(Transmit::shutdown))
     }
 
-    internal fun eventRequest(honeyUri: String, event: Event): Request {
+    fun eventRequest(honeyUri: String, event: Event): Request {
         return honeyUri.httpPost()
             .header(HEADER_HONEYCOMB_TEAM to event.writeKey,
                 HEADER_HONEYCOMB_EVENT_TIME to event.timeStamp.toRfc3339(),
@@ -196,13 +197,13 @@ internal object Transmit {
             .body(event.toJsonString())
     }
 
-    internal fun eventRequest(honeyUri: String, honeyConfig: HoneyConfig, events: List<Event>): Request {
+    fun eventRequest(honeyUri: String, honeyConfig: HoneyConfig, events: List<Event>): Request {
         return honeyUri.httpPost()
             .header(HEADER_HONEYCOMB_TEAM to honeyConfig.writeKey)
             .body(events.toJsonString())
     }
 
-    internal fun markerRequest(marker: Marker? = null, method: Method, honeyConfig: HoneyConfig): Request {
+    fun markerRequest(marker: Marker? = null, method: Method, honeyConfig: HoneyConfig): Request {
         val honeyUri: String
         when (method) {
             Method.POST -> {
@@ -228,7 +229,7 @@ internal object Transmit {
             .body(body)
     }
 
-    internal fun submit(event: Event, safeHandler: (Request, Response, Result<String, FuelError>) -> Unit) {
+    fun submit(event: Event, safeHandler: (Request, Response, Result<String, FuelError>) -> Unit) {
         executorService.submit({
             val (request, response, result) = event.blockingSend()
             Transmit.logger.debug { "invoking handler on ${Thread.currentThread().name}" }
