@@ -4,6 +4,10 @@ import com.beust.klaxon.Klaxon
 import com.github.kittinunf.fuel.core.FuelError
 import com.github.kittinunf.fuel.core.FuelManager
 import com.github.kittinunf.fuel.core.Method
+import com.github.kittinunf.fuel.core.Method.POST
+import com.github.kittinunf.fuel.core.Method.PUT
+import com.github.kittinunf.fuel.core.Method.DELETE
+import com.github.kittinunf.fuel.core.Method.GET
 import com.github.kittinunf.fuel.core.Request
 import com.github.kittinunf.fuel.core.Response
 import com.github.kittinunf.fuel.httpPost
@@ -60,21 +64,30 @@ fun List<Event>.blockingSend(honeyConfig: HoneyConfig): Triple<Request, Response
 /**
  * Transmits the [Event] to the API. Merges in any fields found in [GlobalConfig] before transmission
  *
- * This is an _async_ request. You can provide an optional handler, if you are interest in evaluating
- * the response.
+ * This is an _async_ request.
  *
- * @param handler an optional result handler
  */
-fun Event.send(handler: ((Request, Response, Result<String, FuelError>) -> Unit)? = null) {
+fun Event.send() {
     val event = GlobalConfig.applyFields(this)
-    val safeHandler: (Request, Response, Result<String, FuelError>) -> Unit = handler ?: { _, response, result ->
+    Transmit.submit(event, { _, response, result ->
         result.fold({ _ ->
             Transmit.logger.debug { response.statusCode }
         }, { err ->
             Transmit.logger.warn { err }
         })
-    }
-    Transmit.submit(event, safeHandler)
+    })
+}
+
+/**
+ * Transmits the [Event] to the API. Merges in any fields found in [GlobalConfig] before transmission
+ *
+ * This is an _async_ request. You need to provide a handler, in order to evaluate the response.
+ *
+ * @param handler the result handler
+ */
+fun Event.send(handler: (Request, Response, Result<String, FuelError>) -> Unit) {
+    val event = GlobalConfig.applyFields(this)
+    Transmit.submit(event, handler)
 }
 
 /**
@@ -86,7 +99,7 @@ fun Event.send(handler: ((Request, Response, Result<String, FuelError>) -> Unit)
  * if the call failed
  */
 fun Marker.create(honeyConfig: HoneyConfig): Result<Marker, Exception> {
-    val (_, _, result) = Transmit.markerRequest(this, Method.POST, honeyConfig).responseString()
+    val (_, _, result) = Transmit.postMarker(this, honeyConfig).responseString()
     return when (result) {
         is Result.Failure -> {
             Result.error(result.error)
@@ -102,11 +115,11 @@ fun Marker.create(honeyConfig: HoneyConfig): Result<Marker, Exception> {
  *
  * This is a _blocking_ request and you will need to handle the result
  *
- * @return the [Result], contains a new [Marker] instance with the update marker data or an exception
+ * @return the [Result], contains a new [Marker] instance with the updated marker data or an exception
  * if the call failed
  */
 fun Marker.update(honeyConfig: HoneyConfig): Result<Marker, Exception> {
-    val (_, _, result) = Transmit.markerRequest(this, Method.PUT, honeyConfig).responseString()
+    val (_, _, result) = Transmit.putMarker(this, honeyConfig).responseString()
     return when (result) {
         is Result.Failure -> {
             Result.error(result.error)
@@ -125,7 +138,7 @@ fun Marker.update(honeyConfig: HoneyConfig): Result<Marker, Exception> {
  * @return the [Result], contains the deleted [Marker] instance or an exception if the call failed
  */
 fun Marker.remove(honeyConfig: HoneyConfig): Result<Marker, Exception> {
-    val (_, _, result) = Transmit.markerRequest(this, Method.DELETE, honeyConfig).responseString()
+    val (_, _, result) = Transmit.deleteMarker(this, honeyConfig).responseString()
     return when (result) {
         is Result.Failure -> {
             Result.error(result.error)
@@ -146,7 +159,7 @@ fun Marker.remove(honeyConfig: HoneyConfig): Result<Marker, Exception> {
  * @return the [Result], contains a list of [Marker] instances or an exception if the call failed
  */
 fun allMarkers(honeyConfig: HoneyConfig): Result<List<Marker>, Exception> {
-    val (_, _, result) = Transmit.markerRequest(honeyConfig = honeyConfig, method = Method.GET).responseString()
+    val (_, _, result) = Transmit.getMarkers(honeyConfig).responseString()
     return when (result) {
         is Result.Failure -> {
             Result.error(result.error)
@@ -203,30 +216,44 @@ private object Transmit {
             .body(events.toJsonString())
     }
 
-    fun markerRequest(marker: Marker? = null, method: Method, honeyConfig: HoneyConfig): Request {
-        val honeyUri: String
+    fun postMarker(marker: Marker, honeyConfig: HoneyConfig): Request {
+        val honeyUri = "${honeyConfig.apiHost}$MARKERS_PATH${honeyConfig.dataSet}"
+        return markerRequest(marker, POST, honeyUri, honeyConfig.writeKey)
+    }
+
+    fun putMarker(marker: Marker, honeyConfig: HoneyConfig): Request {
+        val honeyUri = "${honeyConfig.apiHost}$MARKERS_PATH${honeyConfig.dataSet}/${marker.id}"
+        return markerRequest(marker, PUT, honeyUri, honeyConfig.writeKey)
+    }
+
+    fun deleteMarker(marker: Marker, honeyConfig: HoneyConfig): Request {
+        val honeyUri = "${honeyConfig.apiHost}$MARKERS_PATH${honeyConfig.dataSet}/${marker.id}"
+        return markerRequest(marker, DELETE, honeyUri, honeyConfig.writeKey)
+    }
+
+    fun getMarkers(honeyConfig: HoneyConfig): Request {
+        val honeyUri = "${honeyConfig.apiHost}$MARKERS_PATH${honeyConfig.dataSet}"
+        return markerRequest(honeyUri, honeyConfig.writeKey)
+    }
+
+    private fun markerRequest(honeyUri: String, writeKey: String): Request {
+        return FuelManager.instance.request(GET, honeyUri)
+            .header(HEADER_HONEYCOMB_TEAM to writeKey)
+            .body("")
+    }
+
+    fun markerRequest(marker: Marker, method: Method, honeyUri: String, writeKey: String): Request {
         when (method) {
-            Method.POST -> {
-                honeyUri = "${honeyConfig.apiHost}$MARKERS_PATH${honeyConfig.dataSet}"
-            }
-            Method.PUT -> {
-                honeyUri = "${honeyConfig.apiHost}$MARKERS_PATH${honeyConfig.dataSet}/${marker?.id}"
-            }
-            Method.DELETE -> {
-                honeyUri = "${honeyConfig.apiHost}$MARKERS_PATH${honeyConfig.dataSet}/${marker?.id}"
-            }
-            Method.GET -> {
-                honeyUri = "${honeyConfig.apiHost}$MARKERS_PATH${honeyConfig.dataSet}"
+            PUT, POST, DELETE -> {
+                return FuelManager.instance.request(method, honeyUri)
+                    .header(HEADER_HONEYCOMB_TEAM to writeKey)
+                    .body(marker.toJsonString())
             }
             else -> {
                 logger.warn { "Method $method not supported" }
                 throw IllegalArgumentException()
             }
         }
-        val body = marker?.toJsonString() ?: ""
-        return FuelManager.instance.request(method, honeyUri)
-            .header(HEADER_HONEYCOMB_TEAM to honeyConfig.writeKey)
-            .body(body)
     }
 
     fun submit(event: Event, safeHandler: (Request, Response, Result<String, FuelError>) -> Unit) {

@@ -6,7 +6,6 @@ import org.junit.Test
 
 class HoneyConfigTest {
 
-
     @Test
     fun checksDefaults() {
         val dataSet = "data_set"
