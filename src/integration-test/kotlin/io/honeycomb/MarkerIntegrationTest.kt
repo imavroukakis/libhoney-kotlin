@@ -14,7 +14,6 @@ import java.time.ZoneOffset
 class MarkerIntegrationTest {
 
     private val logger = KotlinLogging.logger {}
-    private val honeyConfig = HoneyConfig(writeKey = System.getenv("WRITE_KEY"), dataSet = "libhoney-kt-test")
 
     @Test
     fun markerLifeCycle() {

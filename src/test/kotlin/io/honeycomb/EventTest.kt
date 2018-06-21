@@ -42,23 +42,24 @@ class EventTest {
     fun eventAdd() {
         val now = LocalDateTime.now()
         val event = Event.newEvent(honeyConfig, now).add("string", "bar")
-                .add("integer", 1)
-                .add("float", 1.1f)
-                .add("bool", true)
-                .add("date", now)
-                .add("array", listOf(1, 2, 3, 4))
-                .add("range", 1..4)
-                .add("long_range", 1L..4L)
-        assertThat(event.toJson()).isNotEmpty
-        assertThat(event.toJson()).satisfies { t ->
-            assertThat(t["string"]).isEqualTo("bar")
-            assertThat(t["integer"]).isEqualTo(1)
-            assertThat(t["float"]).isEqualTo(1.1f)
-            assertThat(t["bool"]).isEqualTo(true)
-            assertThat(t["date"]).isEqualTo(now.toRfc3339())
-            assertThat(t["array"]).isEqualTo(listOf(1, 2, 3, 4))
-            assertThat(t["range"]).isEqualTo(listOf(1, 2, 3, 4))
-            assertThat(t["long_range"]).isEqualTo(listOf(1L, 2L, 3L, 4L))
-        }
+            .add("integer", 1)
+            .add("float", 1.1f)
+            .add("bool", true)
+            .add("date", now)
+            .add("array", listOf(1, 2, 3, 4))
+            .add("range", 1..4)
+            .add("long_range", 1L..4L)
+        assertThat(event.toJson())
+            .isNotEmpty
+            .satisfies { t ->
+                assertThat(t["string"]).isEqualTo("bar")
+                assertThat(t["integer"]).isEqualTo(1)
+                assertThat(t["float"]).isEqualTo(1.1f)
+                assertThat(t["bool"]).isEqualTo(true)
+                assertThat(t["date"]).isEqualTo(now.toRfc3339())
+                assertThat(t["array"]).isEqualTo(listOf(1, 2, 3, 4))
+                assertThat(t["range"]).isEqualTo(listOf(1, 2, 3, 4))
+                assertThat(t["long_range"]).isEqualTo(listOf(1L, 2L, 3L, 4L))
+            }
     }
 }

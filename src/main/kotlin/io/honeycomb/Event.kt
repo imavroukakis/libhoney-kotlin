@@ -42,13 +42,22 @@ class Event private constructor(
          * @return a new [Event]
          */
         fun newEvent(honeyConfig: HoneyConfig, timeStamp: LocalDateTime = LocalDateTime.now()) =
-            Event(honeyConfig.writeKey, honeyConfig.dataSet,
+            Event(
+                honeyConfig.writeKey, honeyConfig.dataSet,
                 honeyConfig.apiHost, honeyConfig.sampleRate,
-                timeStamp)
+                timeStamp
+            )
     }
 
     private constructor (event: Event, eventDataPair: Pair<String, Any>)
-        : this(event.writeKey, event.dataSet, event.apiHost, event.sampleRate, event.timeStamp, event.data.plus(eventDataPair))
+        : this(
+        event.writeKey,
+        event.dataSet,
+        event.apiHost,
+        event.sampleRate,
+        event.timeStamp,
+        event.data.plus(eventDataPair)
+    )
 
     private constructor (event: Event, events: Map<String, Any>)
         : this(event.writeKey, event.dataSet, event.apiHost, event.sampleRate, event.timeStamp, event.data.plus(events))
@@ -66,6 +75,10 @@ class Event private constructor(
                 Event(this, attribute to listOf(value).flatten())
             is IntRange ->
                 Event(this, attribute to listOf(value).flatten())
+            is Collection<*> ->
+                Event(this, attribute to listOf(value).flatten())
+            is Pair<*, *> ->
+                Event(this, attribute to value.toList())
             else ->
                 Event(this, attribute to value)
         }

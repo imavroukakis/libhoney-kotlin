@@ -2,6 +2,7 @@ package io.honeycomb
 
 import com.beust.klaxon.JsonArray
 import com.beust.klaxon.JsonObject
+import com.beust.klaxon.Klaxon
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAccessor
 
@@ -25,7 +26,7 @@ fun Marker.toJson(): JsonObject {
 
 fun Marker.toJsonString(): String = toJson().toJsonString()
 
-fun Event.toJsonString(): String = toJson().toJsonString()
+fun Event.toJsonString(): String = Klaxon().toJsonString(this.data)
 
 fun Event.toJson(): JsonObject = JsonObject(this.data)
 

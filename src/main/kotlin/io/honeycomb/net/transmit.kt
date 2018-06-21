@@ -1,19 +1,17 @@
 package io.honeycomb.net
 
-import com.beust.klaxon.Klaxon
 import com.github.kittinunf.fuel.core.FuelError
 import com.github.kittinunf.fuel.core.FuelManager
 import com.github.kittinunf.fuel.core.Method
-import com.github.kittinunf.fuel.core.Method.POST
-import com.github.kittinunf.fuel.core.Method.PUT
 import com.github.kittinunf.fuel.core.Method.DELETE
 import com.github.kittinunf.fuel.core.Method.GET
+import com.github.kittinunf.fuel.core.Method.POST
+import com.github.kittinunf.fuel.core.Method.PUT
 import com.github.kittinunf.fuel.core.Request
 import com.github.kittinunf.fuel.core.Response
 import com.github.kittinunf.fuel.httpPost
 import com.github.kittinunf.result.Result
 import io.honeycomb.Event
-import io.honeycomb.GlobalConfig
 import io.honeycomb.HoneyConfig
 import io.honeycomb.Marker
 import io.honeycomb.Tuning
@@ -27,150 +25,14 @@ import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
-private const val EVENTS_PATH = "/1/events/"
-private const val BATCH_EVENTS_PATH = "/1/batch/"
-
 /**
- * Transmits the [Event] to the API. Merges in any fields found in [GlobalConfig] before transmission
- *
- * This is a _blocking_ request and you will need to handle the result
- *
- * @return the response [Triple]
+ * Get the number of [Event] and [Marker] waiting to be submitted. The number is made up of both the in-flight and queued
+ * objects.
+ * @return the number of [Event] and [Marker] waiting to be submitted.
  */
-fun Event.blockingSend(): Triple<Request, Response, Result<String, FuelError>> {
-    val eventsWithGlobalPairs = GlobalConfig.applyFields(this)
-    return Transmit.eventRequest(
-        "${eventsWithGlobalPairs.apiHost}$EVENTS_PATH${eventsWithGlobalPairs.dataSet}",
-        eventsWithGlobalPairs
-    ).responseString()
-}
+fun pendingTransmissions() = Transmit.remainingTransmissions()
 
-/**
- * Batch transmits events to the API. Merges in any fields found in [GlobalConfig] before transmission
- *
- * This is a _blocking_ request and you will need to handle the result
- *
- * @return the response [Triple]
- */
-fun List<Event>.blockingSend(honeyConfig: HoneyConfig): Triple<Request, Response, Result<String, FuelError>> {
-    val eventsWithGlobalPairs = this.map { GlobalConfig.applyFields(it) }
-    return Transmit.eventRequest(
-        "${honeyConfig.apiHost}$BATCH_EVENTS_PATH${honeyConfig.dataSet}",
-        honeyConfig,
-        eventsWithGlobalPairs
-    ).responseString()
-}
-
-/**
- * Transmits the [Event] to the API. Merges in any fields found in [GlobalConfig] before transmission
- *
- * This is an _async_ request.
- *
- */
-fun Event.send() {
-    val event = GlobalConfig.applyFields(this)
-    Transmit.submit(event, { _, response, result ->
-        result.fold({ _ ->
-            Transmit.logger.debug { response.statusCode }
-        }, { err ->
-            Transmit.logger.warn { err }
-        })
-    })
-}
-
-/**
- * Transmits the [Event] to the API. Merges in any fields found in [GlobalConfig] before transmission
- *
- * This is an _async_ request. You need to provide a handler, in order to evaluate the response.
- *
- * @param handler the result handler
- */
-fun Event.send(handler: (Request, Response, Result<String, FuelError>) -> Unit) {
-    val event = GlobalConfig.applyFields(this)
-    Transmit.submit(event, handler)
-}
-
-/**
- * Creates a new [Marker]
- *
- * This is a _blocking_ request and you will need to handle the result
- *
- * @return the [Result], contains a new [Marker] instance additionally populated with the marker id or an exception
- * if the call failed
- */
-fun Marker.create(honeyConfig: HoneyConfig): Result<Marker, Exception> {
-    val (_, _, result) = Transmit.postMarker(this, honeyConfig).responseString()
-    return when (result) {
-        is Result.Failure -> {
-            Result.error(result.error)
-        }
-        is Result.Success -> {
-            Result.of(Klaxon().parse<Marker>(result.get()))
-        }
-    }
-}
-
-/**
- * Updates the [Marker]
- *
- * This is a _blocking_ request and you will need to handle the result
- *
- * @return the [Result], contains a new [Marker] instance with the updated marker data or an exception
- * if the call failed
- */
-fun Marker.update(honeyConfig: HoneyConfig): Result<Marker, Exception> {
-    val (_, _, result) = Transmit.putMarker(this, honeyConfig).responseString()
-    return when (result) {
-        is Result.Failure -> {
-            Result.error(result.error)
-        }
-        is Result.Success -> {
-            Result.of(Klaxon().parse<Marker>(result.get()))
-        }
-    }
-}
-
-/**
- * Deletes the [Marker]
- *
- * This is a _blocking_ request and you will need to handle the result
- *
- * @return the [Result], contains the deleted [Marker] instance or an exception if the call failed
- */
-fun Marker.remove(honeyConfig: HoneyConfig): Result<Marker, Exception> {
-    val (_, _, result) = Transmit.deleteMarker(this, honeyConfig).responseString()
-    return when (result) {
-        is Result.Failure -> {
-            Result.error(result.error)
-        }
-        is Result.Success -> {
-            Result.of(Klaxon().parse<Marker>(result.get()))
-        }
-    }
-}
-
-/**
- * Lists all existing [Marker]
- *
- * This is a _blocking_ request and you will need to handle the result
- *
- * @param honeyConfig the [HoneyConfig]
- *
- * @return the [Result], contains a list of [Marker] instances or an exception if the call failed
- */
-fun allMarkers(honeyConfig: HoneyConfig): Result<List<Marker>, Exception> {
-    val (_, _, result) = Transmit.getMarkers(honeyConfig).responseString()
-    return when (result) {
-        is Result.Failure -> {
-            Result.error(result.error)
-        }
-        is Result.Success -> {
-            Result.of(Klaxon().parseArray(result.get()))
-        }
-    }
-}
-
-private object Transmit {
+internal object Transmit {
 
     private const val HEADER_HONEYCOMB_TEAM = "X-Honeycomb-Team"
     private const val HEADER_HONEYCOMB_EVENT_TIME = "X-Honeycomb-io.honeycomb.Event-Time"
@@ -183,12 +45,13 @@ private object Transmit {
             LoggingDiscardPolicy()
         }
         val threadPoolExecutor = ThreadPoolExecutor(
-            1,
+            5,
             Tuning.threadCount,
             30, TimeUnit.SECONDS,
             LinkedBlockingDeque<Runnable>(Tuning.maxQueueSize),
             DaemonThreadFactory(),
-            policy)
+            policy
+        )
         threadPoolExecutor.prestartCoreThread()
         threadPoolExecutor
     }
@@ -197,20 +60,26 @@ private object Transmit {
     init {
         FuelManager.instance.baseHeaders = mapOf(
             "Content-Type" to "application/json",
-            "User-Agent" to "libhoney-kt/0.1.1"
+            "User-Agent" to "libhoney-kt/0.2.0"
         )
         Runtime.getRuntime().addShutdownHook(Thread(Transmit::shutdown))
     }
 
+    fun remainingTransmissions() = executorService.activeCount + executorService.queue.size
+
     fun eventRequest(honeyUri: String, event: Event): Request {
+        logger.debug { event.toJsonString() }
         return honeyUri.httpPost()
-            .header(HEADER_HONEYCOMB_TEAM to event.writeKey,
+            .header(
+                HEADER_HONEYCOMB_TEAM to event.writeKey,
                 HEADER_HONEYCOMB_EVENT_TIME to event.timeStamp.toRfc3339(),
-                HEADER_HONEYCOMB_SAMPLE_RATE to event.sampleRate)
+                HEADER_HONEYCOMB_SAMPLE_RATE to event.sampleRate
+            )
             .body(event.toJsonString())
     }
 
     fun eventRequest(honeyUri: String, honeyConfig: HoneyConfig, events: List<Event>): Request {
+        logger.debug { events.toJsonString() }
         return honeyUri.httpPost()
             .header(HEADER_HONEYCOMB_TEAM to honeyConfig.writeKey)
             .body(events.toJsonString())
@@ -256,12 +125,12 @@ private object Transmit {
         }
     }
 
-    fun submit(event: Event, safeHandler: (Request, Response, Result<String, FuelError>) -> Unit) {
-        executorService.submit({
+    fun submit(event: Event, handler: (Request, Response, Result<String, FuelError>) -> Unit) {
+        executorService.submit {
             val (request, response, result) = event.blockingSend()
-            Transmit.logger.debug { "invoking handler on ${Thread.currentThread().name}" }
-            safeHandler.invoke(request, response, result)
-        })
+            Transmit.logger.debug { "invoking handler on ${Thread.currentThread().name} for ${request.cUrlString()}" }
+            handler(request, response, result)
+        }
     }
 
     private fun shutdown() {

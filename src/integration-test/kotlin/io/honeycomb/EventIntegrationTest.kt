@@ -14,8 +14,6 @@ import java.time.LocalDateTime
 
 class EventIntegrationTest {
 
-    private val honeyConfig = HoneyConfig(writeKey = System.getenv("WRITE_KEY"), dataSet = "libhoney-kt-test")
-
     @Test
     fun checksTransmission() {
         val now = LocalDateTime.now()
@@ -56,7 +54,7 @@ class EventIntegrationTest {
                 .blockingSend()
         assertThat(response.statusCode).isEqualTo(HttpURLConnection.HTTP_OK)
         // rather dirty check
-        assertThat(request.cUrlString().contains("\\\"hello\\\":\\\"world\\\"")).isTrue()
+        assertThat(request.cUrlString()).contains("hello", "world")
     }
 
     @Test

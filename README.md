@@ -1,7 +1,7 @@
 # libhoney for Kotlin
 
 [![CircleCI](https://circleci.com/gh/imavroukakis/libhoney-kotlin.svg?style=shield)](https://circleci.com/gh/imavroukakis/libhoney-kotlin)
-[![Download](https://api.bintray.com/packages/imavroukakis/maven/libhoney-kotlin/images/download.svg?version=0.1.1) ](https://bintray.com/imavroukakis/maven/libhoney-kotlin/0.1.1/link)[![codecov](https://codecov.io/gh/imavroukakis/libhoney-kotlin/branch/master/graph/badge.svg)](https://codecov.io/gh/imavroukakis/libhoney-kotlin)
+[![Download](https://api.bintray.com/packages/imavroukakis/maven/libhoney-kotlin/images/download.svg?version=0.2.0) ](https://bintray.com/imavroukakis/maven/libhoney-kotlin/0.2.0/link)[![codecov](https://codecov.io/gh/imavroukakis/libhoney-kotlin/branch/master/graph/badge.svg)](https://codecov.io/gh/imavroukakis/libhoney-kotlin)
 
 Kotlin library for sending events to [Honeycomb](https://honeycomb.io).
 
@@ -175,6 +175,8 @@ Use `GlobalConfig`, if you have common fields that you would like to send with e
 GlobalConfig.addField("num", 1.0f)
 ```
 
+## Markers
+
 ### Dynamic fields
 
 ```
@@ -183,17 +185,72 @@ GlobalConfig.addField { Pair("heap_free", Runtime.getRuntime().freeMemory()) }
 GlobalConfig.addField { Pair("time", LocalDateTime.now()) }
 ```
 
+## Collection observability
+
+A set of classes and extensions are provided that enable you to observe common collection operations. These are:
+
+#### Classes
+```
+ObservableMutableLinkedList
+ObservableMutableList
+ObservableMutableMap
+ObservableMutableSet
+```
+
+#### Collection extensions
+
+```
+add(element: E, honeyConfig: HoneyConfig): Boolean
+
+addAll(elements: Collection<E>, honeyConfig: HoneyConfig): Boolean
+
+removeAll(elements: Collection<E>, honeyConfig: HoneyConfig): Boolean
+
+remove(element: E, honeyConfig: HoneyConfig): Boolean
+
+clear(honeyConfig: HoneyConfig)
+```
+
+#### Map extensions
+
+```
+put(key: K, value: V, honeyConfig: HoneyConfig): V?
+
+set(key: K, honeyConfig: HoneyConfig, value: V)
+
+putAll(from: Map<out K, V>, honeyConfig: HoneyConfig)
+
+remove(key: K, honeyConfig: HoneyConfig): V?
+
+clear(honeyConfig: HoneyConfig)
+```
+
+### Usage
+
+If you require the entire collection to be observed, use one from the `Observable` group and pass your `HoneyConfig` e.g.
+
+`val list = ObservableMutableList<Int>(honeyConfig)`
+
+Invoking any of `add`,`addAll`,`remove`,`removeAll` will result in an `Event` to be sent to Honeycomb. In the preceding example,invoking `add(4)` on the collection has the effect of sending the following event:
+```
+{"traceable-mutable-list.add": 4, "element-type": "java.lang.Integer"}
+```
+
+If you wish to selectively observe a collection or map, you can use any of the extensions functions e.g. `list.add(4, honeyConfig)`. The only requirement here is that you need to pass your `HoneyConfig` every time.
+
+For some simple examples, look at `MutableCollectionExtensionsIntegrationTest` and `TraceableMutableCollectionsIntegrationTest` in the _integration-test_ folder.
+
 ## Tuning
 
 If you want to tweak the defaults you must set these **before you send your first Event**.
 
 The following aspects of the library can be tuned
 
-Parameter | Default Value
------------- | -------------
-`Tuning.threadCount` | 20
+Parameter             | Default Value
+--------------------- | -------------
+`Tuning.threadCount`  | 20
 `Tuning.maxQueueSize` | 1000
-`Tuning.retryPolicy` | `Tuning.RetryPolicy.RETRY`
+`Tuning.retryPolicy`  | `Tuning.RetryPolicy.RETRY`
 
 Through empirical testing:
 - values between 20 and 30 work best for `threadCount`
