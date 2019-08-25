@@ -4,6 +4,8 @@ import io.kotlintest.matchers.date.shouldBeAfter
 import io.kotlintest.shouldBe
 import io.kotlintest.shouldNotBe
 import io.kotlintest.specs.FunSpec
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import java.time.LocalDateTime
 
 class GlobalConfigTest : FunSpec({
@@ -19,7 +21,9 @@ class GlobalConfigTest : FunSpec({
             GlobalConfig.addField { Pair("heap_free", Runtime.getRuntime().freeMemory()) }
             GlobalConfig.addField { Pair("time", LocalDateTime.now()) }
             val now = LocalDateTime.now()
-            Thread.sleep(100)
+            runBlocking {
+                delay(100L)
+            }
             val event = GlobalConfig.applyFields(Event.newEvent(honeyConfig))
             // assert that the higher order function is not applied when added
             val dynamicDate = LocalDateTime.parse(event.data["time"] as String, dateFormat)

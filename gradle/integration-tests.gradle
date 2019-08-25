@@ -32,7 +32,6 @@ task integrationTest(type: Test) {
 
 integrationTest {
     jacoco {
-        append = false
         destinationFile = file("$buildDir/jacoco-it/jacocoTest.exec")
         classDumpDir = file("$buildDir/jacoco-it/classpathdumps")
     }
