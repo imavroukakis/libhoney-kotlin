@@ -5,22 +5,16 @@ import io.honeycomb.GlobalConfig
 import io.honeycomb.Tuning
 import io.honeycomb.honeyConfig
 import io.honeycomb.net.pendingTransmissions
+import io.kotlintest.specs.FunSpec
 import mu.KotlinLogging
 import org.awaitility.Awaitility
-import org.junit.Before
-import org.junit.Test
 
-class MutableCollectionExtensionsIntegrationTest {
+class MutableCollectionExtensionsIntegrationTest : FunSpec({
 
-    private val logger = KotlinLogging.logger {}
+    val logger = KotlinLogging.logger {}
+    GlobalConfig.clearAllFields()
 
-    @Before
-    fun clearGlobalConfig() {
-        GlobalConfig.clearAllFields()
-    }
-
-    @Test
-    fun testMutableCollectionExtensions() {
+    test("send traced mutable collection") {
         Tuning.threadCount = 50
         Tuning.maxQueueSize = 3000
         val list: MutableCollection<Int> = ArrayList()
@@ -41,8 +35,7 @@ class MutableCollectionExtensionsIntegrationTest {
         }
     }
 
-    @Test
-    fun testMutableMapExtensions() {
+    test("send traced mutable map") {
         Tuning.threadCount = 50
         Tuning.maxQueueSize = 3000
         val map: MutableMap<String, Int> = HashMap()
@@ -60,4 +53,4 @@ class MutableCollectionExtensionsIntegrationTest {
             pendingTransmissions() == 0
         }
     }
-}
+})

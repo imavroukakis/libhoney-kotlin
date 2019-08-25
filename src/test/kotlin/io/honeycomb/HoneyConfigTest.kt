@@ -1,18 +1,16 @@
 package io.honeycomb
 
-import org.hamcrest.core.IsEqual.equalTo
-import org.junit.Assert.assertThat
-import org.junit.Test
+import io.kotlintest.matchers.string.shouldBeEqualIgnoringCase
+import io.kotlintest.specs.FunSpec
 
-class HoneyConfigTest {
+class HoneyConfigTest : FunSpec({
 
-    @Test
-    fun checksDefaults() {
+    test("configuration defaults and assignment are sane") {
         val dataSet = "data_set"
         val writeKey = "WRITE_KEY"
-        assertThat("https://api.honeycomb.io", equalTo(HoneyConfig(writeKey, dataSet).apiHost))
+        "https://api.honeycomb.io" shouldBeEqualIgnoringCase HoneyConfig(writeKey, dataSet).apiHost
         val honeyConfig = HoneyConfig(writeKey, "myDataSet", "https://foo.bar")
-        assertThat("https://foo.bar", equalTo(honeyConfig.apiHost))
-        assertThat("myDataSet", equalTo(honeyConfig.dataSet))
+        "https://foo.bar" shouldBeEqualIgnoringCase honeyConfig.apiHost
+        "myDataSet" shouldBeEqualIgnoringCase honeyConfig.dataSet
     }
-}
+})

@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit
 private const val ELEMENT_TYPE = "element-type"
 private const val CORE_POOL_SIZE = 5
 private const val KEEP_ALIVE = 30L
+private const val SHUTDOWN_MILLIS = 2000L
 private val executorService by lazy {
     val threadPoolExecutor = ThreadPoolExecutor(
         CORE_POOL_SIZE,
@@ -50,7 +51,7 @@ internal inline fun <reified V : Any, T> observe(
 private fun shutdown() {
     executorService.shutdown()
     try {
-        if (!executorService.awaitTermination(2000, TimeUnit.MILLISECONDS)) {
+        if (!executorService.awaitTermination(SHUTDOWN_MILLIS, TimeUnit.MILLISECONDS)) {
             executorService.shutdownNow()
         }
     } catch (e: InterruptedException) {

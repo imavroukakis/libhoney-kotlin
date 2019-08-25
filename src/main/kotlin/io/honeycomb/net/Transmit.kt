@@ -9,6 +9,7 @@ import com.github.kittinunf.fuel.core.Method.POST
 import com.github.kittinunf.fuel.core.Method.PUT
 import com.github.kittinunf.fuel.core.Request
 import com.github.kittinunf.fuel.core.Response
+import com.github.kittinunf.fuel.core.extensions.cUrlString
 import com.github.kittinunf.fuel.httpPost
 import com.github.kittinunf.result.Result
 import io.honeycomb.Event
@@ -38,16 +39,20 @@ internal object Transmit {
     private const val HEADER_HONEYCOMB_EVENT_TIME = "X-Honeycomb-io.honeycomb.Event-Time"
     private const val HEADER_HONEYCOMB_SAMPLE_RATE = "X-Honeycomb-Samplerate"
     private const val MARKERS_PATH = "/1/markers/"
+    private const val SHUTDOWN_MILLIS = 2000L
+    private const val CORE_POOL_SIZE = 5
+    private const val KEEP_ALIVE_SECONDS = 30L
     private val executorService by lazy {
         val policy: RejectedExecutionHandler = if (Tuning.retryPolicy == Tuning.RetryPolicy.RETRY) {
             LoggingCallerRunsPolicy()
         } else {
             LoggingDiscardPolicy()
         }
+
         val threadPoolExecutor = ThreadPoolExecutor(
-            5,
+            CORE_POOL_SIZE,
             Tuning.threadCount,
-            30, TimeUnit.SECONDS,
+            KEEP_ALIVE_SECONDS, TimeUnit.SECONDS,
             LinkedBlockingDeque<Runnable>(Tuning.maxQueueSize),
             DaemonThreadFactory(),
             policy
@@ -128,7 +133,7 @@ internal object Transmit {
     fun submit(event: Event, handler: (Request, Response, Result<String, FuelError>) -> Unit) {
         executorService.submit {
             val (request, response, result) = event.blockingSend()
-            Transmit.logger.debug { "invoking handler on ${Thread.currentThread().name} for ${request.cUrlString()}" }
+            logger.debug { "invoking handler on ${Thread.currentThread().name} for ${request.cUrlString()}" }
             handler(request, response, result)
         }
     }
@@ -136,7 +141,7 @@ internal object Transmit {
     private fun shutdown() {
         executorService.shutdown()
         try {
-            if (!executorService.awaitTermination(2000, TimeUnit.MILLISECONDS)) {
+            if (!executorService.awaitTermination(SHUTDOWN_MILLIS, TimeUnit.MILLISECONDS)) {
                 executorService.shutdownNow()
             }
         } catch (e: InterruptedException) {

@@ -5,22 +5,17 @@ import io.honeycomb.GlobalConfig
 import io.honeycomb.Tuning
 import io.honeycomb.honeyConfig
 import io.honeycomb.net.pendingTransmissions
+import io.kotlintest.specs.FunSpec
 import mu.KotlinLogging
 import org.awaitility.Awaitility
-import org.junit.Before
-import org.junit.Test
 
-class TraceableMutableCollectionsIntegrationTest {
+class TraceableMutableCollectionsIntegrationTest : FunSpec({
 
-    private val logger = KotlinLogging.logger {}
+    val logger = KotlinLogging.logger {}
 
-    @Before
-    fun clearGlobalConfig() {
-        GlobalConfig.clearAllFields()
-    }
+    GlobalConfig.clearAllFields()
 
-    @Test
-    fun testTraceableSetInt() {
+    test("sending traceable ints") {
         Tuning.threadCount = 50
         Tuning.maxQueueSize = 3000
         val set = ObservableMutableSet<Int>(honeyConfig)
@@ -40,8 +35,7 @@ class TraceableMutableCollectionsIntegrationTest {
         logger.info { "took ${stopwatchOverall.stop().elapsed().toMillis()} millis" }
     }
 
-    @Test
-    fun testTraceableSetObject() {
+    test("sending traceable objects") {
         Tuning.threadCount = 50
         Tuning.maxQueueSize = 3000
         val set = ObservableMutableSet<DataObject>(honeyConfig)
@@ -61,8 +55,7 @@ class TraceableMutableCollectionsIntegrationTest {
         logger.info { "took ${stopwatchOverall.stop().elapsed().toMillis()} millis" }
     }
 
-    @Test
-    fun testTraceableListInt() {
+    test("sending traceable ints from list operations") {
         Tuning.threadCount = 50
         Tuning.maxQueueSize = 3000
         val list = ObservableMutableList<Int>(honeyConfig)
@@ -82,8 +75,7 @@ class TraceableMutableCollectionsIntegrationTest {
         logger.info { "took ${stopwatchOverall.stop().elapsed().toMillis()} millis" }
     }
 
-    @Test
-    fun testTraceableLinkedListInt() {
+    test("sending traceable ints from linked list") {
         Tuning.threadCount = 50
         Tuning.maxQueueSize = 3000
         val list = ObservableMutableLinkedList<Int>(honeyConfig)
@@ -103,8 +95,7 @@ class TraceableMutableCollectionsIntegrationTest {
         logger.info { "took ${stopwatchOverall.stop().elapsed().toMillis()} millis" }
     }
 
-    @Test
-    fun testTraceableMapStringInt() {
+    test("sending traceable string:int map") {
         Tuning.threadCount = 50
         Tuning.maxQueueSize = 3000
         val map = ObservableMutableMap<String, Int>(honeyConfig)
@@ -122,4 +113,4 @@ class TraceableMutableCollectionsIntegrationTest {
         }
         logger.info { "took ${stopwatchOverall.stop().elapsed().toMillis()} millis" }
     }
-}
+})

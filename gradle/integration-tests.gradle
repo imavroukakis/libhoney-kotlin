@@ -1,25 +1,33 @@
 // Add integration test source sets
 sourceSets {
-    integrationTest { sourceSet ->
-        ["kotlin", "resources"].each {
-            if (!sourceSet.hasProperty(it)) return
-            sourceSet."$it".srcDir file("src/integration-test/${it}")
-        }
+    integrationTest {
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
     }
 }
 
-// Setup dependencies for integration testing
+configurations {
+    integrationTestImplementation.extendsFrom implementation
+    integrationTestRuntimeOnly.extendsFrom runtimeOnly
+}
+
+
 dependencies {
-    integrationTestCompile sourceSets.main.output
-    integrationTestCompile sourceSets.test.output
-    integrationTestCompile configurations.testCompile
-    integrationTestRuntime configurations.testRuntime
+    integrationTestImplementation 'org.awaitility:awaitility:3.1.0'
+    integrationTestImplementation 'com.google.guava:guava:25.1-jre'
+    integrationTestImplementation 'io.kotlintest:kotlintest-runner-junit5:3.4.0'
 }
 
 // Define integration test task
 task integrationTest(type: Test) {
+    useJUnitPlatform()
+    description = 'Runs integration tests.'
+    group = 'verification'
+
     testClassesDirs = sourceSets.integrationTest.output.classesDirs
     classpath = sourceSets.integrationTest.runtimeClasspath
+
+    shouldRunAfter test
 }
 
 integrationTest {
