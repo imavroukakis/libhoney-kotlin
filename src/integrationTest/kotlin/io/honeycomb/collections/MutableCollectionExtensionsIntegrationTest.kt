@@ -8,16 +8,38 @@ import io.honeycomb.net.pendingTransmissions
 import io.kotlintest.specs.FunSpec
 import mu.KotlinLogging
 import org.awaitility.Awaitility
+import java.util.LinkedList
 
 class MutableCollectionExtensionsIntegrationTest : FunSpec({
 
     val logger = KotlinLogging.logger {}
     GlobalConfig.clearAllFields()
 
-    test("send traced mutable collection") {
+    test("send traced mutable list") {
         Tuning.threadCount = 50
         Tuning.maxQueueSize = 3000
         val list: MutableCollection<Int> = ArrayList()
+        val stopwatch = Stopwatch.createStarted()
+        for (i in 1..200) {
+            list.add(i, honeyConfig)
+        }
+        val elements = listOf(-1, -2, -3)
+        list.addAll(elements, honeyConfig)
+        list.remove(1, honeyConfig)
+        list.removeAll(elements, honeyConfig)
+        list.clear(honeyConfig)
+        logger.info { "Submitted all operations to traced mutable collection in ${stopwatch.stop().elapsed().toMillis()} millis" }
+        stopwatch.reset().start()
+        Awaitility.await().until {
+            logger.info { "${pendingTransmissions()} transmissions remaining " }
+            pendingTransmissions() == 0
+        }
+    }
+
+    test("send traced mutable linked list") {
+        Tuning.threadCount = 50
+        Tuning.maxQueueSize = 3000
+        val list: MutableCollection<Int> = LinkedList()
         val stopwatch = Stopwatch.createStarted()
         for (i in 1..200) {
             list.add(i, honeyConfig)
